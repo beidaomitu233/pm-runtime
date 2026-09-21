@@ -18,6 +18,9 @@ import { RuntimeLifecycle, type RuntimeState } from "./lifecycle.js";
 
 export const DEFAULT_BODY_LIMIT_BYTES = 12 * 1024 * 1024;
 export const SESSION_HEADER = "x-pm-session" as const;
+// 前端每个请求都发送 X-Request-Id；CORS 允许头漏掉它会让浏览器 preflight 失败并静默拦截请求，
+// 页面因此恒停在“本地服务尚未就绪”。见 COM-029。
+export const ALLOWED_REQUEST_HEADERS = "X-PM-Session, X-Request-Id, Content-Type, Idempotency-Key" as const;
 
 const ULID_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 const PUBLIC_HEALTH_PATH = "/api/v1/health";
@@ -145,7 +148,7 @@ export class RuntimeHttpServer {
         }
         reply
           .header("Access-Control-Allow-Origin", origin)
-          .header("Access-Control-Allow-Headers", "X-PM-Session, Content-Type, Idempotency-Key")
+          .header("Access-Control-Allow-Headers", ALLOWED_REQUEST_HEADERS)
           .header("Access-Control-Allow-Methods", "GET, POST, PATCH, OPTIONS")
           .header("Vary", "Origin");
       }
@@ -188,6 +191,14 @@ export class RuntimeHttpServer {
         statusCode >= 500,
         validationDetails(error)
       );
+    });
+
+    // Fastify 默认 404 返回 `{statusCode,error,message}`，不经过上面的错误处理器，也不经过本文件的
+    // envelope。前端 client.ts 解析失败后会降级成“Runtime 请求失败。”，把“路由不存在”伪装成“服务不可用”。
+    // 这里显式注册 notFound，保证未实现的路由也返回统一错误 envelope 并带 requestId。见 COM-030。
+    this.app.setNotFoundHandler((request, reply) => {
+      const requestId = this.requestIds.get(request) ?? createRequestId(this.now());
+      return errorResponse(reply, requestId, 404, "INVALID_ARGUMENT", "Route not found");
     });
 
     this.app.get(PUBLIC_HEALTH_PATH, async (request) => {

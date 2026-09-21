@@ -114,4 +114,29 @@ describe("RuntimeHttpServer", () => {
     expect(tooLarge.statusCode).toBe(413);
     expect(tooLarge.json().error.code).toBe("INVALID_ARGUMENT");
   });
+
+  it("answers unknown routes with the shared error envelope instead of Fastify's default body", async () => {
+    const lifecycle = new RuntimeLifecycle({
+      statePath: join(directory, "runtime-state.json"),
+      pid: 42003,
+      isProcessAlive: () => false
+    });
+    server = new RuntimeHttpServer({
+      lifecycle,
+      allowedOrigins: ["tauri://localhost"]
+    });
+
+    const endpoint = await server.start();
+    const missing = await server.inject({
+      method: "GET",
+      url: "/api/v1/projects",
+      headers: { "x-pm-session": endpoint.sessionToken }
+    });
+    expect(missing.statusCode).toBe(404);
+    expect(missing.headers["x-request-id"]).toMatch(/^[0-9A-HJKMNP-TV-Z]{26}$/);
+    expect(missing.json()).toMatchObject({
+      error: { code: "INVALID_ARGUMENT", message: "Route not found" },
+      requestId: missing.headers["x-request-id"]
+    });
+  });
 });
