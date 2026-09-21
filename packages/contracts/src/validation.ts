@@ -57,17 +57,17 @@ if (!validateSuccess || !validateError || !validatePageQuery || !validatePage) {
 }
 
 export function parseSuccessEnvelope<T>(value: unknown): SuccessEnvelope<T> {
-  return parse(validateSuccess, value) as SuccessEnvelope<T>;
+  return parse(validateSuccess!, value) as SuccessEnvelope<T>;
 }
 
 export function parseErrorEnvelope(value: unknown): ErrorEnvelope {
-  return parse(validateError, value);
+  return parse(validateError!, value);
 }
 
 export function parsePageQuery(value: unknown): PageQuery {
-  return parse(validatePageQuery, value);
+  return parse(validatePageQuery!, value);
 }
 
 export function parsePage<T>(value: unknown): Page<T> {
-  return parse(validatePage, value) as Page<T>;
+  return parse(validatePage!, value) as Page<T>;
 }
