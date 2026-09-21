@@ -3,3 +3,8 @@ export * from "./examples.js";
 export * from "./schemas.js";
 export * from "./types.js";
 export * from "./validation.js";
+export * from "./diagram.js";
+export * from "./diagramSchema.js";
+export * from "./diagramTypes.js";
+export * from "./diagramValidation.js";
+export * from "./diagramFixtures.js";

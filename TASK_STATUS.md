@@ -8,4 +8,9 @@
 | BE-002 | 后端执行模型/backend-local | packages/contracts：成功/错误 envelope、分页、ID、时间、错误码 Schema、类型、示例和运行时校验 | 待合并 | 2026-09-21 | 无 |
 | FE-001～FE-011 | 前端执行模型/local-foundation | package.json、Vite/TypeScript 配置、src/app、src/api、src/pages、src/state、基础测试 | 进行中 | 2026-09-21 | 远程仓库已配置但当前为空；依赖安装和自动检查尚未完成，无法远程领取或交付确认 |
 | FE-012/013/015/016 | 前端执行模型/meetings | Meetings 列表、粘贴导入、详情分块查看、meeting ID 与 Agent 引导 | 进行中 | 2026-09-21 | 会议 API/依赖未完成，自动检查受依赖安装阻断 |
+<<<<<<< HEAD
+| BE-002 | 后端执行模型/backend-local | `packages/contracts`：成功/错误 envelope、分页、ID、时间、错误码 Schema、类型、示例和运行时校验 | 完成 | 2026-09-21 | 无 |
+| BE-003 | 后端执行模型/backend-local | `packages/contracts`：Diagram DSL v0.1 JSON Schema、类型、运行时校验、合法/非法 fixtures 和变更规则 | 待合并 | 2026-09-21 | 无 |
+=======
 | FE-018/019 | 前端执行模型/diagrams | 图形列表、类型/状态筛选、详情、warning、来源与 revision 历史 | 进行中 | 2026-09-21 | Diagram API/合同尚未进入 dev；自动检查受依赖安装阻断 |
+>>>>>>> origin/dev
