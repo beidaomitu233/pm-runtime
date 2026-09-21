@@ -4,3 +4,4 @@ export * from "./schemaValidator.js";
 export * from "./businessValidator.js";
 export * from "./sourceRefsValidator.js";
 export * from "./graphModel.js";
+export * from "./layoutGate.js";
