@@ -18,4 +18,4 @@
 | BE-016 | 后端执行模型/backend-local | `packages/diagram-core`：Ajv Diagram DSL Schema validator、错误路径和错误数量上限 | 完成 | 2026-09-21 | 无 |
 | BE-017 | 后端执行模型/backend-local | `packages/diagram-core`：Diagram DSL 业务规则校验、引用/泳道/可达性/decision/self-loop/重复边 | 完成 | 2026-09-21 | 无 |
 | BE-018 | 后端执行模型/backend-local | `packages/diagram-core`：SourceRefs meeting/node/offset/quote 校验与规范化输出 | 完成 | 2026-09-21 | 无 |
-| BE-019 | 后端执行模型/backend-local | `packages/diagram-core`：DSL 到与 draw.io 无关的稳定 Graph Model 转换 | 待合并 | 2026-09-21 | 无 |
+| BE-019 | 后端执行模型/backend-local | `packages/diagram-core`：DSL 到与 draw.io 无关的稳定 Graph Model 转换 | 完成 | 2026-09-21 | 无 |
