@@ -16,4 +16,4 @@
 | BE-004 | 后端执行模型/backend-local | `runtime-sidecar/src`：daemon 生命周期、随机回环端口、单实例锁、runtime state、session token 和优雅停止 | 完成 | 2026-09-21 | 无 |
 | BE-005 | 后端执行模型/backend-local | `runtime-sidecar/src`：Fastify HTTP 基线、X-PM-Session 认证、requestId、body limit、CORS 和统一错误处理 | 完成 | 2026-09-21 | 无 |
 | BE-016 | 后端执行模型/backend-local | `packages/diagram-core`：Ajv Diagram DSL Schema validator、错误路径和错误数量上限 | 完成 | 2026-09-21 | 无 |
-| BE-017 | 后端执行模型/backend-local | `packages/diagram-core`：Diagram DSL 业务规则校验、引用/泳道/可达性/decision/self-loop/重复边 | 进行中 | 2026-09-21 | 无 |
+| BE-017 | 后端执行模型/backend-local | `packages/diagram-core`：Diagram DSL 业务规则校验、引用/泳道/可达性/decision/self-loop/重复边 | 待合并 | 2026-09-21 | 无 |
