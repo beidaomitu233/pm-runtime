@@ -47,14 +47,14 @@
 | B-3 | 会议与图形 API 未实现（后端仅有 health 与鉴权基线） | FE-012～FE-019 的页面无法对接真实后端 | 推进 BE-009～BE-025 | 未解除 |
 | B-4 | Tauri 桌面壳与 capability 缺失 | FE-014 文件导入、FE-032 桌面 E2E | 建立 `src-tauri` 工程并登记最小 capability | 未解除 |
 | B-5 | `REVIEW_REPORT.md` 不存在 | 审查环节无输入基线 | 审查模型补充；当前记录为文档缺口 | 未解除 |
-| B-6 | 浏览器端无法到达 Runtime | 所有页面的真实接口联调 | 提供 dev 通道：运行时启动入口 + API 代理 + 配置注入，且不写死随机端口与令牌 | 处理中 |
+| B-6 | 浏览器端无法到达 Runtime | 所有页面的真实接口联调 | 提供 dev 通道：运行时启动入口 + 配置注入，且不写死随机端口与令牌 | **已解除**（2026-09-21） |
 | B-7 | 会议/图形页面的真实接口不可用，只能对着局部 typed client 验证 | FE-012～FE-019 不得标记联调通过 | 同 B-1、B-3 | 部分解除（B-1 已解除，B-3 仍在） |
 
 ## 3 说明
 
 1. 正式远程领取需在协作分支和认领机制就绪后进行；本表本地行不代表远程占用。
 2. `origin/HEAD` 当前指向 `feature/backend-monorepo-local`，与实际协作方式不符，建议指向 `dev`。已登记 COM-031。
-3. 工作区存在未跟踪的既有资料（`AGENTS.md`、`prototype/`、`需求讨论记录.md`、`应用功能清单.md`、`2026.08.13.PBS+插件开发计划(1).xlsx`）和未跟踪的 `vitest.backend.config.ts` 重复配置，保留不动，见 COM-032。`.workbuddy/` 已加入 `.gitignore`。
+3. 工作区存在未跟踪的既有资料（`AGENTS.md`、`prototype/`、`需求讨论记录.md`、`应用功能清单.md`、`2026.08.13.PBS+插件开发计划(1).xlsx`）和未跟踪的 `vitest.backend.config.ts` 重复配置，保留不动，见 COM-032。`.workbuddy/` 与 `.pm-runtime/` 已加入 `.gitignore`。
 4. B-6 属于链路级阻塞，不是单个页面缺陷，已于本地解除：先执行 `pnpm runtime:dev` 启动 Runtime，Vite 开发期插件再把真实回环端口与令牌注入 `window.__PM_RUNTIME_CONFIG__`。选择注入而不是代理，是因为代理需要把令牌写进 dev server 配置或转发规则，会引入第二份令牌来源；注入复用 Runtime 自己写出的 state 文件，端口与令牌都不写死。桌面壳就绪后应移除该插件，避免两套注入来源。B-6 解除不等于页面已联调通过：业务路由仍未实现，见 B-3。
 5. 本机 `.git/refs` 下新建多级目录会静默失败（`fix/xxx`、`feature/xxx`），分支名请使用顶层名称；`packed-refs` 必须写成 `<sha> <refname>`、按 refname 排序且行尾不得带 CR，否则 `for-each-ref` 报 `ignoring ref with broken name`。索引损坏时用 `git read-tree --reset HEAD` 重建，不要手工删除 `.git/index`。见 COM-034。
 6. 未推送的本地提交在本机不持久：同类事故已发生两次（COM-033、COM-037），本表、修复提交和闸门成果都曾整批丢失。任务包完成后应尽快推送；推送属对外操作，需用户授权。

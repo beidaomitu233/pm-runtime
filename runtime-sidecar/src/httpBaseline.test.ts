@@ -82,6 +82,10 @@ describe("RuntimeHttpServer", () => {
     });
     expect(preflight.statusCode).toBe(204);
     expect(preflight.headers["access-control-allow-origin"]).toBe("tauri://localhost");
+    // 前端每个请求都带 X-Request-Id；允许头漏掉它，浏览器 preflight 会失败并静默拦截请求。见 COM-029。
+    expect(preflight.headers["access-control-allow-headers"]).toBe(
+      "X-PM-Session, X-Request-Id, Content-Type, Idempotency-Key"
+    );
 
     const forbiddenOrigin = await server.inject({
       method: "GET",
