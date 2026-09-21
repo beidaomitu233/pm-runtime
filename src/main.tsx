@@ -6,10 +6,12 @@ import { AppShell } from './app/AppShell'
 import { ErrorBoundary } from './app/ErrorBoundary'
 import { GlobalFeedback } from './app/GlobalFeedback'
 import { RuntimeGate } from './app/RuntimeGate'
-import { DiagnosticsPage, DiagramsPage, ProjectHomeRedirect, ProjectRouteGate, SettingsConnectionsPage } from './pages/ProjectPages'
+import { DiagnosticsPage, ProjectHomeRedirect, ProjectRouteGate, SettingsConnectionsPage } from './pages/ProjectPages'
 import { ProjectsPageEnhanced as ProjectsPage } from './pages/ProjectsPageEnhanced'
 import { MeetingsPageEnhanced } from './pages/MeetingsPageEnhanced'
 import { MeetingDetailPageEnhanced } from './pages/MeetingDetailPageEnhanced'
+import { DiagramsPageEnhanced } from './pages/DiagramsPageEnhanced'
+import { DiagramDetailPageEnhanced, DiagramEditorPlaceholder } from './pages/DiagramDetailPageEnhanced'
 import './styles.css'
 
 const queryClient = new QueryClient({
@@ -25,7 +27,7 @@ const queryClient = new QueryClient({
 })
 
 function App() {
-  return <QueryClientProvider client={queryClient}><BrowserRouter><RuntimeGate><Routes><Route element={<AppShell />}><Route path="/" element={<Navigate replace to="/projects" />} /><Route path="/projects" element={<ProjectsPage />} /><Route path="/projects/:projectId" element={<ProjectRouteGate />}><Route index element={<ProjectHomeRedirect />} /><Route path="meetings" element={<MeetingsPageEnhanced />} /><Route path="meetings/:meetingId" element={<MeetingDetailPageEnhanced />} /><Route path="diagrams" element={<DiagramsPage />} /></Route><Route path="/settings/connections" element={<SettingsConnectionsPage />} /><Route path="/diagnostics" element={<DiagnosticsPage />} /><Route path="*" element={<Navigate replace to="/projects" />} /></Route></Routes></RuntimeGate><GlobalFeedback /></BrowserRouter></QueryClientProvider>
+  return <QueryClientProvider client={queryClient}><BrowserRouter><RuntimeGate><Routes><Route element={<AppShell />}><Route path="/" element={<Navigate replace to="/projects" />} /><Route path="/projects" element={<ProjectsPage />} /><Route path="/projects/:projectId" element={<ProjectRouteGate />}><Route index element={<ProjectHomeRedirect />} /><Route path="meetings" element={<MeetingsPageEnhanced />} /><Route path="meetings/:meetingId" element={<MeetingDetailPageEnhanced />} /><Route path="diagrams" element={<DiagramsPageEnhanced />} /><Route path="diagrams/:diagramId" element={<DiagramDetailPageEnhanced />} /><Route path="diagrams/:diagramId/edit" element={<DiagramEditorPlaceholder />} /></Route><Route path="/settings/connections" element={<SettingsConnectionsPage />} /><Route path="/diagnostics" element={<DiagnosticsPage />} /><Route path="*" element={<Navigate replace to="/projects" />} /></Route></Routes></RuntimeGate><GlobalFeedback /></BrowserRouter></QueryClientProvider>
 }
 
 createRoot(document.getElementById('root')!).render(<StrictMode><ErrorBoundary><App /></ErrorBoundary></StrictMode>)

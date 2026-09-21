@@ -7,6 +7,7 @@ import {
   isHealthResponse,
   isProjectListResponse,
   isProjectSummary,
+} from '../types/contracts'
 import {
   type MeetingContentChunk,
   type MeetingDetail,
@@ -16,7 +17,12 @@ import {
   isMeetingDetail,
   isMeetingListResponse,
 } from '../types/meetingContracts'
-} from '../types/contracts'
+import {
+  type DiagramDetail,
+  type DiagramListResponse,
+  isDiagramDetail,
+  isDiagramListResponse,
+} from '../types/diagramContracts'
 
 export class RuntimeApiError extends Error {
   readonly code: string
@@ -149,6 +155,8 @@ export const apiClient = {
   createMeeting: (projectId: string, title: string, text: string) => request<MeetingSummary>(`/projects/${encodeURIComponent(projectId)}/meetings`, { method: 'POST', body: { title, text }, idempotencyKey: crypto.randomUUID() }, isMeetingSummary),
   getMeeting: (meetingId: string) => request<MeetingDetail>(`/meetings/${encodeURIComponent(meetingId)}`, { method: 'GET' }, isMeetingDetail),
   getMeetingContent: (meetingId: string, offset: number, limit = 8000) => request<MeetingContentChunk>(`/meetings/${encodeURIComponent(meetingId)}/content?offset=${offset}&limit=${limit}`, { method: 'GET' }, isMeetingContentChunk),
+  listDiagrams: (projectId: string, query = '') => request<DiagramListResponse>(`/projects/${encodeURIComponent(projectId)}/diagrams${query}`, { method: 'GET' }, isDiagramListResponse),
+  getDiagram: (diagramId: string) => request<DiagramDetail>(`/diagrams/${encodeURIComponent(diagramId)}`, { method: 'GET' }, isDiagramDetail),
 }
 
 export function isRetryableRuntimeError(error: unknown) {
