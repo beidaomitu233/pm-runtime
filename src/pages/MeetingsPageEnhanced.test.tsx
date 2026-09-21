@@ -21,9 +21,11 @@ describe('MeetingsPageEnhanced', () => {
   it('renders meeting status and filters', async () => {
     renderPage()
     expect(await screen.findByText('产品评审')).toBeInTheDocument()
-    expect(screen.getByText('可读取')).toBeInTheDocument()
+    expect(screen.getByText('可读取', { selector: '.meeting-status' })).toBeInTheDocument()
     fireEvent.change(screen.getByLabelText('状态筛选'), { target: { value: 'failed' } })
-    expect(await screen.findByDisplayValue('failed')).toBeInTheDocument()
+    // 筛选后页面框架必须保留：筛选控件若被骨架屏替换，「状态筛选」会取不到。
+    expect(screen.getByLabelText('状态筛选')).toHaveValue('failed')
+    await waitFor(() => expect(apiClient.listMeetings).toHaveBeenCalledWith('01J00000000000000000000001', expect.stringContaining('status=failed')))
   })
 
   it('validates pasted meeting content before submitting', async () => {

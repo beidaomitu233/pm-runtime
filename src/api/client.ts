@@ -16,6 +16,7 @@ import {
   isMeetingContentChunk,
   isMeetingDetail,
   isMeetingListResponse,
+  isMeetingSummary,
 } from '../types/meetingContracts'
 import {
   type DiagramDetail,

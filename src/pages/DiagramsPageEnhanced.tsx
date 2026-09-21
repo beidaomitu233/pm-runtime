@@ -12,9 +12,13 @@ export function DiagramsPageEnhanced() {
   const [status, setStatus] = useState<DiagramStatus | ''>('')
   const diagrams = useQuery({ queryKey: ['diagrams', projectId, type, status], queryFn: () => apiClient.listDiagrams(projectId!, buildQuery(type, status)), enabled: Boolean(projectId) })
 
-  if (diagrams.isPending) return <section className="diagram-page"><div className="skeleton-list"><div /><div /><div /></div></section>
-  if (diagrams.isError) return <section className="diagram-page"><PageError error={diagrams.error} onRetry={() => void diagrams.refetch()} /></section>
-  return <section className="diagram-page"><div className="page-heading"><div><p className="eyebrow">项目主线</p><h1>流程图</h1><p>查看 Agent 生成的流程图和泳道图版本。</p></div></div><div className="diagram-toolbar"><select aria-label="图形类型筛选" value={type} onChange={(event) => setType(event.target.value as DiagramType | '')}><option value="">全部类型</option><option value="flowchart">流程图</option><option value="swimlane">泳道图</option></select><select aria-label="图形状态筛选" value={status} onChange={(event) => setStatus(event.target.value as DiagramStatus | '')}><option value="">全部状态</option><option value="ready">可编辑</option><option value="validation_failed">校验失败</option><option value="render_failed">生成失败</option><option value="rendering">生成中</option></select></div>{diagrams.data.items.length ? <div className="diagram-list">{diagrams.data.items.map((diagram) => <DiagramRow key={diagram.id} diagram={diagram} />)}</div> : <div className="empty-state"><div className="empty-icon">◇</div><h2>还没有流程图</h2><p>在宿主 Agent 中调用 diagram.render 后，图形会出现在这里。</p></div>}</section>
+  return <section className="diagram-page">
+    <div className="page-heading"><div><p className="eyebrow">项目主线</p><h1>流程图</h1><p>查看 Agent 生成的流程图和泳道图版本。</p></div></div>
+    <div className="diagram-toolbar"><select aria-label="图形类型筛选" value={type} onChange={(event) => setType(event.target.value as DiagramType | '')}><option value="">全部类型</option><option value="flowchart">流程图</option><option value="swimlane">泳道图</option></select><select aria-label="图形状态筛选" value={status} onChange={(event) => setStatus(event.target.value as DiagramStatus | '')}><option value="">全部状态</option><option value="ready">可编辑</option><option value="validation_failed">校验失败</option><option value="render_failed">生成失败</option><option value="rendering">生成中</option></select></div>
+    {diagrams.isPending && <div className="skeleton-list" aria-label="流程图加载中"><div /><div /><div /></div>}
+    {diagrams.isError && <PageError error={diagrams.error} onRetry={() => void diagrams.refetch()} />}
+    {diagrams.data && (diagrams.data.items.length ? <div className="diagram-list">{diagrams.data.items.map((diagram) => <DiagramRow key={diagram.id} diagram={diagram} />)}</div> : <div className="empty-state"><div className="empty-icon">◇</div><h2>还没有流程图</h2><p>在宿主 Agent 中调用 diagram.render 后，图形会出现在这里。</p></div>)}
+  </section>
 }
 
 function DiagramRow({ diagram }: { diagram: DiagramSummary }) {

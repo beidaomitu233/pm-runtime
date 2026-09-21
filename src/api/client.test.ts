@@ -18,7 +18,7 @@ describe('apiClient', () => {
 
   it('maps structured API errors without exposing response internals', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ error: { code: 'RUNTIME_UNAVAILABLE', message: '本地服务不可用。', retryable: true }, requestId: 'req-1' }), { status: 503 }))
-    await expect(apiClient.getHealth()).rejects.toMatchObject<Partial<RuntimeApiError>>({ code: 'RUNTIME_UNAVAILABLE', requestId: 'req-1', retryable: true })
+    await expect(apiClient.getHealth()).rejects.toMatchObject({ code: 'RUNTIME_UNAVAILABLE', requestId: 'req-1', retryable: true })
   })
 
   it('rejects malformed success envelopes', async () => {
