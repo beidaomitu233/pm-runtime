@@ -220,7 +220,7 @@ validate request
 | [ ] | BE-001 | Monorepo：建立 `runtime-sidecar`、contracts、storage、diagram-core、agent-adapters 包和统一 strict 配置。使用者为全部执行模型。 | 输入规划文档；输出可构建 workspace。依赖无。 | 禁止循环依赖；空骨架在 Windows 可构建。 | lint、typecheck、空单测一次命令通过。 |
 | [x] | BE-002 | Contracts：定义成功/错误 envelope、分页、ID、时间和错误码 Schema。 | 输出 `packages/contracts` 导出和示例；前端/MCP 依赖。 | 未知错误不可直接透传 stack；Schema 可运行时解析。 | 每个错误码有正反例；类型与 JSON Schema 一致性测试。 |
 | [x] | BE-003 | Diagram DSL：编写 v0.1 JSON Schema、合法/非法 fixtures 和变更规则。 | 输入 PROJECT 第 13 节；输出 versioned Schema。 | 覆盖数量、长度、enum、引用结构；Schema 失败提供 JSON Pointer。 | 至少 10 合法、20 非法 fixture。 |
-| [ ] | BE-004 | Daemon lifecycle：实现随机回环端口、单实例锁、runtime state、session token、优雅停止。 | 输出 daemon endpoint；Tauri/MCP 依赖。 | 旧 state、端口占用、崩溃 PID、无写权限。验收为第二实例不并发写库。 | 进程集成测试覆盖启动、重复启动、异常退出和清理。 |
+| [x] | BE-004 | Daemon lifecycle：实现随机回环端口、单实例锁、runtime state、session token、优雅停止。 | 输出 daemon endpoint；Tauri/MCP 依赖。 | 旧 state、端口占用、崩溃 PID、无写权限。验收为第二实例不并发写库。 | 进程集成测试覆盖启动、重复启动、异常退出和清理。 |
 | [ ] | BE-005 | HTTP 基线：Fastify、认证、requestId、body limit、CORS、错误处理。 | 输入 contracts；输出 `/health` 与受保护测试路由。 | 错 token 401；畸形 JSON 400；错误不泄漏路径。 | Fastify inject 覆盖所有中间件分支。 |
 | [ ] | BE-006 | Storage 技术闸门：选择 SQLite 驱动并验证事务、WAL、备份、自包含 Windows 打包。 | 输入候选驱动；输出 ADR 与最小二进制。依赖 Tauri sidecar 构建。 | 原生模块缺失或打包失败即阻塞后续 DB 实现。 | 干净 Windows VM 创建、查询、备份、重启恢复。 |
 | [ ] | BE-007 | Migration runner：按 `DATABASE_PLAN.md` 实现版本、checksum、事务与启动校验。 | 输入 migrations；输出目标 schema。 | checksum 改写、降级版本、迁移失败进入只读诊断。 | 空库、逐版升级、失败回滚、重复运行。 |

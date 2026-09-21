@@ -13,4 +13,4 @@
 =======
 | FE-018/019 | 前端执行模型/diagrams | 图形列表、类型/状态筛选、详情、warning、来源与 revision 历史 | 进行中 | 2026-09-21 | Diagram API/合同尚未进入 dev；自动检查受依赖安装阻断 |
 >>>>>>> origin/dev
-| BE-004 | 后端执行模型/backend-local | `runtime-sidecar/src`：daemon 生命周期、随机回环端口、单实例锁、runtime state、session token 和优雅停止 | 进行中 | 2026-09-21 | 无 |
+| BE-004 | 后端执行模型/backend-local | `runtime-sidecar/src`：daemon 生命周期、随机回环端口、单实例锁、runtime state、session token 和优雅停止 | 待合并 | 2026-09-21 | 无 |
