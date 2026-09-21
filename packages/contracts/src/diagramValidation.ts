@@ -21,7 +21,7 @@ if (!validateDiagram) {
 }
 
 function collectIssues(validator: ValidateFunction<DiagramDsl>): ReadonlyArray<ErrorObject> {
-  return (validator.errors ?? []).slice(0, 100);
+  return validator.errors ?? [];
 }
 
 export function validateDiagramDsl(value: unknown): value is DiagramDsl {
