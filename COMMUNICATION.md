@@ -46,7 +46,7 @@
 | COM-017 | 安全 | 接口 | MCP 写工具的宿主审批策略是否由 Runtime 强制。 | Runtime 提供读写注解和最小工具集；审批最终由宿主配置管理。 | Connections 说明 | MCP tool metadata、Adapter | agent_adapters | 已确认 | Runtime 不绕过或伪造宿主审批；安装预览展示写工具及建议审批策略。 |
 | COM-018 | 测试 | 测试 | 10 份真实/脱敏会议样例和人工参考图尚未提供。 | 先定义三类语料和评分表；真实材料由产品负责人脱敏并确认授权。 | E2E fixtures | test-fixtures、diagram tests | 测试库 | 待确认 | 无真实材料时可用合成样例开发，但 A04/A05/A10 不能据此宣告最终通过。 |
 
-| COM-019 | 后端执行模型/backend-local | 后端 | BE-002 Contracts 已完成成功/错误 envelope、分页、ULID、UTC 时间、错误码 Schema、运行时 Ajv 校验和示例测试。 | 作为 API、MCP、DSL 和错误码的唯一契约入口；错误详情最多 100 项，不透传 stack。 | 无 | `packages/contracts` | 无 | 执行中 | 类型检查：`npx tsc -p tsconfig.backend.json --noEmit`；测试：`npx vitest run --config vitest.backend.config.mjs`，2 个文件 5 个测试通过。提交：`64a7684`、`9ec7787`；分支：`feature/backend-contracts-be002-local`，待合并到 `dev`。 |
+| COM-019 | 后端执行模型/backend-local | 后端 | BE-002 Contracts 已完成成功/错误 envelope、分页、ULID、UTC 时间、错误码 Schema、运行时 Ajv 校验和示例测试。 | 作为 API、MCP、DSL 和错误码的唯一契约入口；错误详情最多 100 项，不透传 stack。 | 无 | `packages/contracts` | 无 | 已完成 | 类型检查：`npx tsc -p tsconfig.backend.json --noEmit`；测试：`npx vitest run --config vitest.backend.config.mjs`，合并前 2 个文件 5 个测试通过。提交：`64a7684`、`9ec7787`、`b98a43d`；已合并到远程 `dev`，合并提交 `5e1ccf7`。 |
 
 ## 4 新增记录模板
 
