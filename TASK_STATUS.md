@@ -7,3 +7,4 @@
 | BE-001 | 后端执行模型/backend-local | 后端 workspace、packages 空骨架、统一 strict 配置及构建测试；不修改现有前端页面和业务代码 | 进行中 | 2026-09-21 | 未配置远程 Git，无法 fetch/推送领取记录；当前目录没有远程归属确认 |
 | FE-001～FE-011 | 前端执行模型/local-foundation | package.json、Vite/TypeScript 配置、src/app、src/api、src/pages、src/state、基础测试 | 进行中 | 2026-09-21 | 远程仓库已配置但当前为空；依赖安装和自动检查尚未完成，无法远程领取或交付确认 |
 | FE-012/013/015/016 | 前端执行模型/meetings | Meetings 列表、粘贴导入、详情分块查看、meeting ID 与 Agent 引导 | 进行中 | 2026-09-21 | 会议 API/依赖未完成，自动检查受依赖安装阻断 |
+| BE-002 | 后端执行模型/backend-local | `packages/contracts`：成功/错误 envelope、分页、ID、时间、错误码 Schema、类型、示例和运行时校验 | 待合并 | 2026-09-21 | 无 |
