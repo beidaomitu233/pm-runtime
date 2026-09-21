@@ -19,4 +19,4 @@
 | BE-017 | 后端执行模型/backend-local | `packages/diagram-core`：Diagram DSL 业务规则校验、引用/泳道/可达性/decision/self-loop/重复边 | 完成 | 2026-09-21 | 无 |
 | BE-018 | 后端执行模型/backend-local | `packages/diagram-core`：SourceRefs meeting/node/offset/quote 校验与规范化输出 | 完成 | 2026-09-21 | 无 |
 | BE-019 | 后端执行模型/backend-local | `packages/diagram-core`：DSL 到与 draw.io 无关的稳定 Graph Model 转换 | 完成 | 2026-09-21 | 无 |
-| BE-020 | 后端执行模型/backend-local | `packages/diagram-core`：ELK.js/Dagre layout 技术闸门、lane-aware 方案、回退和性能证据 | 进行中 | 2026-09-21 | 无 |
+| BE-020 | 后端执行模型/backend-local | `packages/diagram-core`：ELK.js/Dagre layout 技术闸门、lane-aware 方案、回退和性能证据 | 阻塞 | 2026-09-21 | 自动化对比已通过，但 3-6 泳道视觉评审和坐标快照尚未完成 |
