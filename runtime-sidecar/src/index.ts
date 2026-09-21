@@ -2,3 +2,4 @@
 export const runtimeSidecarPackage = "@pm/runtime-sidecar" as const;
 export * from "./lifecycle.js";
 export * from "./httpBaseline.js";
+export * from "./daemon.js";
