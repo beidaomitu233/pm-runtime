@@ -7,7 +7,7 @@ import { ErrorBoundary } from './app/ErrorBoundary'
 import { GlobalFeedback } from './app/GlobalFeedback'
 import { RuntimeGate } from './app/RuntimeGate'
 import { DiagnosticsPage, DiagramsPage, MeetingsPage, ProjectHomeRedirect, ProjectRouteGate, SettingsConnectionsPage } from './pages/ProjectPages'
-import { ProjectsPage } from './pages/ProjectsPage'
+import { ProjectsPageEnhanced as ProjectsPage } from './pages/ProjectsPageEnhanced'
 import './styles.css'
 
 const queryClient = new QueryClient({

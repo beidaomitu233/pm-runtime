@@ -1,0 +1,23 @@
+.list-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.search-field { display: flex; align-items: center; gap: 8px; min-width: min(320px, 100%); padding: 7px 11px; background: #fff; border: 1px solid #dfe5ef; border-radius: 7px; color: #8995a8; }
+.search-field input { width: 100%; border: 0; outline: 0; font-size: 12px; color: #526179; background: transparent; }
+.toolbar-count { color: #8995a8; font-size: 12px; }
+.project-card { position: relative; }
+.project-card-link { display: flex; gap: 14px; min-width: 0; flex: 1; }
+.project-card-copy { min-width: 0; }
+.project-card .icon-button { position: absolute; top: 12px; right: 12px; color: #8894a7; }
+.load-more { display: block; margin: 18px auto 0; }
+.modal-backdrop { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; padding: 20px; background: #15213c55; }
+.modal { width: min(480px, 100%); max-height: calc(100vh - 40px); overflow: auto; background: #fff; border-radius: 12px; box-shadow: 0 20px 60px #15213c35; }
+.modal-header, .modal-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 17px 20px; border-bottom: 1px solid #edf0f5; }
+.modal-header h2 { margin: 0; font-size: 16px; }
+.modal-footer { justify-content: flex-end; border-top: 1px solid #edf0f5; border-bottom: 0; }
+.modal-body { padding: 20px; }
+.form-field { display: grid; gap: 7px; margin-bottom: 16px; color: #637086; font-size: 12px; }
+.form-field i { color: #bd6666; font-style: normal; }
+.form-field input, .form-field textarea { width: 100%; border: 1px solid #dce2ed; border-radius: 7px; padding: 9px 10px; color: #44536b; outline: 0; }
+.form-field textarea { min-height: 90px; resize: vertical; }
+.form-field input:focus, .form-field textarea:focus { border-color: #87a0e9; box-shadow: 0 0 0 3px #e7edff; }
+.field-error { margin: 8px 0 0; padding: 9px 11px; border-radius: 6px; color: #9b5d59; background: #fff5f4; font-size: 12px; }
+.field-error small { display: block; margin-top: 5px; color: #a38684; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .list-toolbar { align-items: stretch; flex-direction: column; } .search-field { min-width: 0; } }

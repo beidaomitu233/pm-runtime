@@ -134,6 +134,8 @@ export const apiClient = {
   getHealth: () => request<HealthResponse>('/health', { method: 'GET', timeoutMs: 3_000 }, isHealthResponse),
   listProjects: (query = '') => request<ProjectListResponse>(`/projects${query}`, { method: 'GET' }, isProjectListResponse),
   getProject: (projectId: string) => request<ProjectSummary>(`/projects/${encodeURIComponent(projectId)}`, { method: 'GET' }, isProjectSummary),
+  createProject: (name: string, description?: string) => request<ProjectSummary>('/projects', { method: 'POST', body: { name, ...(description ? { description } : {}) }, idempotencyKey: crypto.randomUUID() }, isProjectSummary),
+  renameProject: (projectId: string, name: string) => request<ProjectSummary>(`/projects/${encodeURIComponent(projectId)}`, { method: 'PATCH', body: { name }, idempotencyKey: crypto.randomUUID() }, isProjectSummary),
 }
 
 export function isRetryableRuntimeError(error: unknown) {
