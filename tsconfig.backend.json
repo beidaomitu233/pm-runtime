@@ -9,6 +9,9 @@
     "isolatedModules": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "verbatimModuleSyntax": true
-  }
+  },
+  "include": ["packages/*/src", "runtime-sidecar/src"]
 }
