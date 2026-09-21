@@ -243,7 +243,7 @@ validate request
 | 完成 | 编号 | 模块与目标 | 输入 输出与依赖 | 异常与验收 | 测试要求 |
 |---|---|---|---|---|---|
 | [x] | BE-016 | Schema validator：Ajv 编译、错误路径和错误上限。Agent 调用 render 前使用。 | DSL JSON；输出 typed DSL 或 errors。 | 非 JSON、过深对象、错误爆炸。 | 非法 fixtures 与错误快照。 |
-| [ ] | BE-017 | Business validator：引用、泳道、可达性、decision 和孤立节点规则。 | typed DSL；输出 errors/warnings。 | 大图算法退化；规则顺序需稳定。 | 每条规则正反例、100 节点性能。 |
+| [x] | BE-017 | Business validator：引用、泳道、可达性、decision 和孤立节点规则。 | typed DSL；输出 errors/warnings。 | 大图算法退化；规则顺序需稳定。 | 每条规则正反例、100 节点性能。 |
 | [ ] | BE-018 | SourceRefs validator：校验 meeting、offset 和 quote。 | DSL refs、meeting text；输出规范 refs/warnings。 | 会议不属于项目、offset 越界、quote 不符。 | 中文 offset、缺失 quote、跨项目拒绝。 |
 | [ ] | BE-019 | Graph Model：把 DSL 转成与 draw.io 无关的节点、端口、边、lane 模型。 | valid DSL；输出 normalized graph。 | 稳定排序、无随机 ID。 | 同输入深比较一致；flow/swimlane fixtures。 |
 | [ ] | BE-020 | Layout 技术闸门：比较 ELK.js 与 Dagre，确定 lane-aware 方案和回退。 | 10 个金样；输出 ADR、配置和性能数据。 | 回退边、长标签、3-6 lane、10-30 节点。 | 视觉评审加坐标快照；未通过不得承诺 renderer 完成。 |
