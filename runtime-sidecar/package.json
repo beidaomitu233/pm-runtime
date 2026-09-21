@@ -9,5 +9,9 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.2"
+  },
+  "dependencies": {
+    "fastify": "5.12.5",
+    "@pm/contracts": "workspace:*"
   }
 }

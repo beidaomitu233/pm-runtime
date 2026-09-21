@@ -221,7 +221,7 @@ validate request
 | [x] | BE-002 | Contracts：定义成功/错误 envelope、分页、ID、时间和错误码 Schema。 | 输出 `packages/contracts` 导出和示例；前端/MCP 依赖。 | 未知错误不可直接透传 stack；Schema 可运行时解析。 | 每个错误码有正反例；类型与 JSON Schema 一致性测试。 |
 | [x] | BE-003 | Diagram DSL：编写 v0.1 JSON Schema、合法/非法 fixtures 和变更规则。 | 输入 PROJECT 第 13 节；输出 versioned Schema。 | 覆盖数量、长度、enum、引用结构；Schema 失败提供 JSON Pointer。 | 至少 10 合法、20 非法 fixture。 |
 | [x] | BE-004 | Daemon lifecycle：实现随机回环端口、单实例锁、runtime state、session token、优雅停止。 | 输出 daemon endpoint；Tauri/MCP 依赖。 | 旧 state、端口占用、崩溃 PID、无写权限。验收为第二实例不并发写库。 | 进程集成测试覆盖启动、重复启动、异常退出和清理。 |
-| [ ] | BE-005 | HTTP 基线：Fastify、认证、requestId、body limit、CORS、错误处理。 | 输入 contracts；输出 `/health` 与受保护测试路由。 | 错 token 401；畸形 JSON 400；错误不泄漏路径。 | Fastify inject 覆盖所有中间件分支。 |
+| [x] | BE-005 | HTTP 基线：Fastify、认证、requestId、body limit、CORS、错误处理。 | 输入 contracts；输出 `/health` 与受保护测试路由。 | 错 token 401；畸形 JSON 400；错误不泄漏路径。 | Fastify inject 覆盖所有中间件分支。 |
 | [ ] | BE-006 | Storage 技术闸门：选择 SQLite 驱动并验证事务、WAL、备份、自包含 Windows 打包。 | 输入候选驱动；输出 ADR 与最小二进制。依赖 Tauri sidecar 构建。 | 原生模块缺失或打包失败即阻塞后续 DB 实现。 | 干净 Windows VM 创建、查询、备份、重启恢复。 |
 | [ ] | BE-007 | Migration runner：按 `DATABASE_PLAN.md` 实现版本、checksum、事务与启动校验。 | 输入 migrations；输出目标 schema。 | checksum 改写、降级版本、迁移失败进入只读诊断。 | 空库、逐版升级、失败回滚、重复运行。 |
 | [ ] | BE-008 | File store：实现受控相对路径、临时文件、原子移动、SHA-256、孤儿清理。 | 输入 entity ID 和 bytes；输出相对路径与 hash。 | 路径穿越、junction、磁盘满、rename 失败。 | 临时目录集成测试，含中断恢复和越界攻击。 |
