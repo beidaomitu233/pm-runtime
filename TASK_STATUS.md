@@ -15,4 +15,4 @@
 >>>>>>> origin/dev
 | BE-004 | 后端执行模型/backend-local | `runtime-sidecar/src`：daemon 生命周期、随机回环端口、单实例锁、runtime state、session token 和优雅停止 | 完成 | 2026-09-21 | 无 |
 | BE-005 | 后端执行模型/backend-local | `runtime-sidecar/src`：Fastify HTTP 基线、X-PM-Session 认证、requestId、body limit、CORS 和统一错误处理 | 完成 | 2026-09-21 | 无 |
-| BE-006 | 后端执行模型/backend-local | `packages/storage`：SQLite 驱动技术闸门、事务、WAL、外键、备份和 Windows 自包含可行性验证 | 进行中 | 2026-09-21 | 无 |
+| BE-006 | 后端执行模型/backend-local | `packages/storage`：SQLite 驱动技术闸门、事务、WAL、外键、备份和 Windows 自包含可行性验证 | 阻塞 | 2026-09-21 | 当前环境没有干净 Windows VM，sidecar externalBin 自包含打包与无 Node 启动尚未验证 |
