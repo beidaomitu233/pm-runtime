@@ -1,0 +1,29 @@
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { AppShell } from './app/AppShell'
+import { ErrorBoundary } from './app/ErrorBoundary'
+import { GlobalFeedback } from './app/GlobalFeedback'
+import { RuntimeGate } from './app/RuntimeGate'
+import { DiagnosticsPage, DiagramsPage, MeetingsPage, ProjectHomeRedirect, ProjectRouteGate, SettingsConnectionsPage } from './pages/ProjectPages'
+import { ProjectsPage } from './pages/ProjectsPage'
+import './styles.css'
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (failureCount, error) => {
+        const status = (error as { status?: number }).status
+        return failureCount < 2 && status !== 400 && status !== 401 && status !== 403 && status !== 404
+      },
+      refetchOnWindowFocus: false,
+    },
+  },
+})
+
+function App() {
+  return <QueryClientProvider client={queryClient}><BrowserRouter><RuntimeGate><Routes><Route element={<AppShell />}><Route path="/" element={<Navigate replace to="/projects" />} /><Route path="/projects" element={<ProjectsPage />} /><Route path="/projects/:projectId" element={<ProjectRouteGate />}><Route index element={<ProjectHomeRedirect />} /><Route path="meetings" element={<MeetingsPage />} /><Route path="diagrams" element={<DiagramsPage />} /></Route><Route path="/settings/connections" element={<SettingsConnectionsPage />} /><Route path="/diagnostics" element={<DiagnosticsPage />} /><Route path="*" element={<Navigate replace to="/projects" />} /></Route></Routes></RuntimeGate><GlobalFeedback /></BrowserRouter></QueryClientProvider>
+}
+
+createRoot(document.getElementById('root')!).render(<StrictMode><ErrorBoundary><App /></ErrorBoundary></StrictMode>)
