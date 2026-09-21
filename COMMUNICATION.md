@@ -62,3 +62,4 @@
 - Git 分支与提交 ID；尚未提交时状态不能写“已完成”。
 - 如驳回，说明驳回原因和替代处理，不删除原问题。
 | COM-019 | 前端执行模型/local-foundation | 工程 | 当前仓库此前未配置 Git remote、远程任务状态表或任务认领推送机制；现已补充远程仓库地址，但远程仓库当前为空。 | 基于本地前端提交继续开发，保留未跟踪资料与其他执行流改动；远程有可用分支后再同步、认领和推送。 | TASK_STATUS.md、前端工程骨架 | 无 | 无 | 执行中 | FE-001～FE-011 已有本地提交，尚未进入远程目标分支；依赖安装和自动检查仍待完成。 |
+| COM-020 | 前端执行模型/meetings | 前端 | FE-014 文件导入需要 Tauri 文件选择器和受控 file handle，当前前端壳尚未提供该能力。 | 本批先完成不依赖 Tauri 的会议列表、粘贴导入、详情和 Agent 引导；文件导入暂不伪造浏览器路径，待 Tauri capability 与 Runtime multipart 合同完成后承接。 | Meetings 文件导入 | Tauri capability、meeting import API | meetings | 执行中 | FE-012、FE-013、FE-015、FE-016 本地实现；FE-014 阻塞。 |

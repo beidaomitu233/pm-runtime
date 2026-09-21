@@ -7,6 +7,15 @@ import {
   isHealthResponse,
   isProjectListResponse,
   isProjectSummary,
+import {
+  type MeetingContentChunk,
+  type MeetingDetail,
+  type MeetingListResponse,
+  type MeetingSummary,
+  isMeetingContentChunk,
+  isMeetingDetail,
+  isMeetingListResponse,
+} from '../types/meetingContracts'
 } from '../types/contracts'
 
 export class RuntimeApiError extends Error {
@@ -136,6 +145,10 @@ export const apiClient = {
   getProject: (projectId: string) => request<ProjectSummary>(`/projects/${encodeURIComponent(projectId)}`, { method: 'GET' }, isProjectSummary),
   createProject: (name: string, description?: string) => request<ProjectSummary>('/projects', { method: 'POST', body: { name, ...(description ? { description } : {}) }, idempotencyKey: crypto.randomUUID() }, isProjectSummary),
   renameProject: (projectId: string, name: string) => request<ProjectSummary>(`/projects/${encodeURIComponent(projectId)}`, { method: 'PATCH', body: { name }, idempotencyKey: crypto.randomUUID() }, isProjectSummary),
+  listMeetings: (projectId: string, query = '') => request<MeetingListResponse>(`/projects/${encodeURIComponent(projectId)}/meetings${query}`, { method: 'GET' }, isMeetingListResponse),
+  createMeeting: (projectId: string, title: string, text: string) => request<MeetingSummary>(`/projects/${encodeURIComponent(projectId)}/meetings`, { method: 'POST', body: { title, text }, idempotencyKey: crypto.randomUUID() }, isMeetingSummary),
+  getMeeting: (meetingId: string) => request<MeetingDetail>(`/meetings/${encodeURIComponent(meetingId)}`, { method: 'GET' }, isMeetingDetail),
+  getMeetingContent: (meetingId: string, offset: number, limit = 8000) => request<MeetingContentChunk>(`/meetings/${encodeURIComponent(meetingId)}/content?offset=${offset}&limit=${limit}`, { method: 'GET' }, isMeetingContentChunk),
 }
 
 export function isRetryableRuntimeError(error: unknown) {
