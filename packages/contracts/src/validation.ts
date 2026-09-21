@@ -32,10 +32,12 @@ for (const schema of [
 export class ContractValidationError extends Error {
   readonly code = "VALIDATION_SCHEMA_ERROR" as const;
   readonly issues: ReadonlyArray<ErrorObject>;
+  readonly truncated: boolean;
 
   constructor(issues: ReadonlyArray<ErrorObject>) {
     super("Contract validation failed");
     this.name = "ContractValidationError";
+    this.truncated = issues.length > 100;
     this.issues = issues.slice(0, 100);
   }
 }
