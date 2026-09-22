@@ -22,8 +22,8 @@
 | BE-004 | 后端执行模型/backend-local | `runtime-sidecar/src`：daemon 生命周期、随机回环端口、单实例锁、runtime state、session token 和优雅停止 | 完成 | 2026-09-21 | 无。已合并到 `dev` |
 | BE-005 | 后端执行模型/backend-local | `runtime-sidecar/src`：Fastify HTTP 基线、X-PM-Session 认证、requestId、body limit、CORS 和统一错误处理 | 完成 | 2026-09-21 | 无。已合并到 `dev` |
 | BE-006 | 后端执行模型/backend-local | `packages/storage`：SQLite 驱动选型技术闸门（事务、WAL、备份、Windows 自包含打包） | 阻塞 | 2026-09-21 | **合并阻塞已解除**：成果 `89e4605` 已合入 `dev`（`docs/decisions/BE-006-sqlite-driver.md`、`src/sqliteGate.ts`、`src/sqliteGate.test.ts`）。剩余阻塞属验收项本身：当前环境没有干净 Windows VM，sidecar externalBin 自包含打包与无 Node 启动尚未验证，故不勾选完成 |
-| BE-007 | 未领取 | `packages/storage`：Migration runner（版本、checksum、事务、启动校验） | 未领取 | 2026-09-21 | 前置 BE-006 已进入 `dev`，可开工 |
-| BE-008 | 未领取 | `packages/storage`：受控相对路径、临时文件、原子移动、SHA-256、孤儿清理 | 未领取 | 2026-09-21 | 前置 BE-006 已进入 `dev`，可开工 |
+| BE-007 | 后端执行模型/backend-local | `packages/storage`：Migration runner（版本、checksum、事务、启动校验） | 完成 | 2026-09-22 | 无。`migrationRunner.ts` + 13 个用例通过；checksum 改写、版本倒退、失败回滚、重复运行、CRLF 归一均有实测。剩余边界见 `docs/decisions/BE-007-migration-runner.md`：磁盘满未做注入、迁移文件的打包分发待定（COM-038） |
+| BE-008 | 后端执行模型/backend-local | `packages/storage`：受控相对路径、临时文件、原子移动、SHA-256、孤儿清理 | 完成 | 2026-09-22 | 无。`fileStore.ts` + 14 个用例通过；路径穿越、junction 逃逸、rename 失败无残留、孤儿清理只扫 `.tmp` 均有实测。剩余边界见 `docs/decisions/BE-008-file-store.md`：磁盘满与并发写未做注入、目录 fsync 在 Windows 不可用 |
 | BE-009～BE-015 | 未领取 | 项目与会议：Project service、TXT/MD/DOCX 解析、导入落盘、列表/详情/分块正文与性能隐私 | 未领取 | 2026-09-21 | 依赖 BE-007/BE-008；该链路直接决定 FE-012～FE-017 能否真实联调 |
 | BE-016 | 后端执行模型/backend-local | `packages/diagram-core`：Ajv Diagram DSL Schema validator、错误路径和错误数量上限 | 完成 | 2026-09-21 | 无。已合并到 `dev` |
 | BE-017 | 后端执行模型/backend-local | `packages/diagram-core`：Diagram DSL 业务规则校验、引用/泳道/可达性/decision/self-loop/重复边 | 完成 | 2026-09-21 | 无。已合并到 `dev` |
@@ -36,7 +36,7 @@
 | FE-014 | 前端执行模型/meetings | 通过 Tauri 文件选择器导入 TXT、MD、DOCX | 阻塞 | 2026-09-21 | 仓库尚无 `src-tauri` 与 Tauri capability，受控 file handle 不可用；不伪造浏览器路径 |
 | FE-018/019 | 前端执行模型/diagrams | 图形列表、类型/状态筛选、详情、warning、来源与 revision 历史 | 进行中 | 2026-09-21 | Diagram API 与 `@pm/contracts` 的 diagrams DTO/Schema 尚未实现；见 COM-021 |
 | FE-020～FE-032 | 未领取 | 编辑器技术闸门、DrawioBridge、revision 保存、版本历史、导出、连接设置、诊断、CSP、无障碍与 E2E | 未领取 | 2026-09-21 | FE-020 编辑器闸门未通过前不得启动 FE-021～FE-025 |
-| DB-001～DB-018 | 未领取 | 迁移框架、运行参数、初始 Schema、文件路径契约、Repository、备份恢复、查询计划与发布验收 | 未领取 | 2026-09-21 | 前置 BE-006 已进入 `dev`，可开工 |
+| DB-001～DB-018 | 后端执行模型/backend-local | 迁移框架、运行参数、初始 Schema、文件路径契约、Repository、备份恢复、查询计划与发布验收 | 进行中 | 2026-09-22 | DB-001（迁移框架）、DB-003（初始 Schema）、DB-004（文件路径契约）随 BE-007/BE-008 完成；DB-002（运行参数 ADR）、DB-005（Repository 基类）、DB-006（备份恢复）及 DP2/DP3 各表 repository 未开工 |
 
 ## 2 阻塞汇总
 
@@ -58,6 +58,7 @@
 4. B-6 属于链路级阻塞，不是单个页面缺陷，已于本地解除：先执行 `pnpm runtime:dev` 启动 Runtime，Vite 开发期插件再把真实回环端口与令牌注入 `window.__PM_RUNTIME_CONFIG__`。选择注入而不是代理，是因为代理需要把令牌写进 dev server 配置或转发规则，会引入第二份令牌来源；注入复用 Runtime 自己写出的 state 文件，端口与令牌都不写死。桌面壳就绪后应移除该插件，避免两套注入来源。B-6 解除不等于页面已联调通过：业务路由仍未实现，见 B-3。
 5. 本机 `.git/refs` 下新建多级目录会静默失败（`fix/xxx`、`feature/xxx`），分支名请使用顶层名称；`packed-refs` 必须写成 `<sha> <refname>`、按 refname 排序且行尾不得带 CR，否则 `for-each-ref` 报 `ignoring ref with broken name`。索引损坏时用 `git read-tree --reset HEAD` 重建，不要手工删除 `.git/index`。见 COM-034。
 6. 未推送的本地提交在本机不持久：同类事故已发生两次（COM-033、COM-037），本表、修复提交和闸门成果都曾整批丢失。任务包完成后应尽快推送；推送属对外操作，需用户授权。
+7. 迁移文件目前以 `packages/storage/migrations/*.sql` 的形式存在，运行时由 `loadMigrationsFromDirectory()` 读盘。sidecar 打成 externalBin 后是否随二进制分发尚未决定（COM-038）；在结论落地前，桌面壳启动不能依赖运行时读盘，BE-036 之前的启动流程也不应假设迁移目录一定存在。
 
 ## 4 本次验证记录（2026-09-21）
 
@@ -69,9 +70,20 @@
 | 前端类型检查 | `tsc --noEmit` | 通过（exit 0） |
 | 后端类型检查 | `tsc -p tsconfig.backend.json --noEmit` | 通过（exit 0） |
 | 前端测试 | `vitest run` | 6 个文件 / 14 个用例全部通过（exit 0） |
-| 后端测试 | `vitest run --config vitest.backend.config.mjs` | 12 个文件 / 37 个用例全部通过（exit 0） |
+| 后端测试（BE-007/008 前） | `vitest run --config vitest.backend.config.mjs` | 12 个文件 / 37 个用例全部通过（exit 0） |
 | 生产构建 | `vite build` | 通过，96 个模块（exit 0） |
 | 一键复验 | `pnpm check` | 上述 typecheck 与两组测试串行执行，exit 0 |
 | 真实浏览器联调 | Playwright 驱动 chromium 访问 Vite dev server | `/api/v1/health` 返回 200；RuntimeGate 通过；外壳渲染出项目/连接设置/诊断导航；未实现路由显示“Route not found”并带真实 requestId。详见 `INTEGRATION_REPORT.md` |
 
-未执行：Playwright E2E 套件（无 `src-tauri`，`test:e2e` 尚无用例）、数据库迁移与落盘（BE-007 起）。
+### 4.1 BE-007 / BE-008 验证记录（2026-09-22）
+
+执行环境同上。`pnpm check` 串行执行两次 typecheck 与两组测试，exit 0。
+
+| 检查 | 命令 | 结果 |
+| --- | --- | --- |
+| 后端测试（增量后） | `vitest run --config vitest.backend.config.mjs` | 15 个文件 / 77 个用例全部通过（exit 0） |
+| 迁移框架 | 同上，`packages/storage/src/migrationRunner.test.ts` | 13 个用例通过：空库、重复运行、逐版升级、checksum 改写、版本倒退、失败回滚、历史断档、定义非法、CRLF 归一、packaged 迁移落地 |
+| 初始 Schema | 同上，`packages/storage/src/initialSchema.test.ts` | 13 个用例通过：9 张表与声明索引存在，各枚举/外键/唯一/STRICT 约束均有反例 |
+| 文件存储 | 同上，`packages/storage/src/fileStore.test.ts` | 14 个用例通过：原子写、哈希、覆盖、13 种越界路径、Unicode、junction 逃逸、链接文件、rename 失败无残留、孤儿清理、路径构造 |
+
+未执行：磁盘满故障注入（迁移与落盘均无可控注入手段）、同路径并发写、迁移文件在 externalBin 打包后的分发验证。

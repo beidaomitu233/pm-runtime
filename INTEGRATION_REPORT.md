@@ -122,7 +122,7 @@ BE-006 / BE-020 的内容与 `origin` 上 `feature/backend-storage-gate-backend-
 
 ## 8 剩余缺口与下一步
 
-1. **B-3（最高优先级）**：后端仍只有 `health` 与鉴权基线。BE-007 / BE-008（迁移框架、受控路径与原子落盘）是 `BE-009～BE-015`（项目与会议 API）的前置，直接决定 FE-012～FE-017 能否真实联调。
+1. **B-3（最高优先级）**：后端仍只有 `health` 与鉴权基线。BE-007 / BE-008 已完成（见 §10），`BE-009～BE-015`（项目与会议 API）可以直接开工，它决定 FE-012～FE-017 能否真实联调。DB-002（运行参数 ADR）、DB-005（Repository 基类）、DB-006（备份恢复）仍是 repository 落地前的前置。
 2. **B-2**：BE-020 需要视觉评审环境才能补 3–6 泳道与坐标快照。
 3. **B-4**：`src-tauri` 与最小 capability 就绪后，FE-014 文件导入才可开工；届时应移除 §4.4 的开发期注入插件。
 4. **推送**：`dev` 上 8 个提交（含本轮）尚未推送。未推送提交在本机不持久，建议尽快推送；推送属对外操作，等用户确认。
@@ -132,3 +132,25 @@ BE-006 / BE-020 的内容与 `origin` 上 `feature/backend-storage-gate-backend-
 
 - 工作区根目录残留本次排查产生的临时文件（`.diag*.txt`、`.state*.txt`、`.check*.log`、`.runtime*.log`、`.vite*.log`、`.pageresult*.txt`、`.page-verify.png`、`.verify-page.mjs` 等）。均为未跟踪文件，**未提交**；建议由用户确认后删除，其中 `.verify-page.mjs` 已被 `scripts/verify-runtime-page.mjs` 取代。
 - 工作区存在未跟踪的既有资料（`AGENTS.md`、`prototype/`、`需求讨论记录.md`、`应用功能清单.md`、PBS 开发计划 xlsx）与重复配置 `vitest.backend.config.ts`，按 COM-032 保持不动。
+
+## 10 BE-007 / BE-008 存储包（2026-09-22）
+
+目标：解除 BE-009～BE-015 的前置，让项目与会议的持久化有可依赖的迁移框架和落盘通道。
+
+| 交付 | 文件 | 覆盖 |
+| --- | --- | --- |
+| 迁移框架（DB-001） | `packages/storage/src/migrationRunner.ts` | 版本顺序、checksum、逐版事务、启动校验、只读诊断 |
+| 初始 Schema（DB-003） | `packages/storage/migrations/0001_initial.sql` | 9 张表、STRICT、CHECK 枚举、外键、索引 |
+| 文件路径契约（DB-004） | `packages/storage/src/fileStore.ts` | 受控相对路径、防穿越与防 junction、原子落盘、SHA-256、临时孤儿清理 |
+
+三个不显然的判断：
+
+1. **`schema_migrations` 由 runner 创建，不在 0001 里**（COM-039）。迁移文件要记录自己就必须先有这张表；放进 0001 会让 runner 在读历史之前先撞上“表不存在”。
+2. **checksum 先做 CRLF→LF 归一**（COM-039 同组）。同一份 `.sql` 在 Windows 是 CRLF、在 CI 是 LF，直接哈希原始字节会让 Windows 上每次启动都判定“迁移被改写”。
+3. **孤儿清理只扫 `.tmp`**。不遍历正式项目树，因此这里出 bug 也删不到已提交的会议正文或 revision 文件。
+
+验证（`pnpm check`，exit 0）：后端 15 个文件 / 77 个用例全部通过，其中迁移框架 13 个、初始 Schema 约束反例 13 个、文件存储 14 个。越界路径用例实测覆盖 13 种写法，junction 逃逸用例确认外部目录没有生成文件，rename 失败用例确认 `.tmp` 无残留。
+
+未覆盖：磁盘满与同路径并发写（COM-040，无可控注入手段）；迁移文件在 externalBin 打包后的分发方式（COM-038）。
+
+注意：这仍是库层实现，尚未接入 daemon 启动流程。数据库不会在 `pnpm runtime:dev` 时自动迁移，页面也不会因此多出任何可联调的接口——B-3 依旧未解除。
