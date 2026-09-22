@@ -10,7 +10,7 @@
 | TASK | 功能切片 | 依赖 | 主要修改范围 | 公共冲突区 | 状态 | 可视化验收 |
 |---|---|---|---|---|---|---|
 | TASK-001 | 工程基线与共享合同收口 | 无 | workspace、contracts、前端合同迁移 | contracts、根配置 | 已完成 | 前端与后端 workspace 可统一安装、typecheck、test、build |
-| TASK-002 | Runtime 启动、Tauri 与存储底座 | 001 | src-tauri、runtime lifecycle、HTTP、storage 基线 | Tauri 配置、middleware、migration runner | 待开发 | Desktop 启动后 RuntimeGate 真实显示 ready/错误状态 |
+| TASK-002 | Runtime 启动、Tauri 与存储底座 | 001 | src-tauri、runtime lifecycle、HTTP、storage 基线 | Tauri 配置、middleware、migration runner | 开发中 | Desktop 启动后 RuntimeGate 真实显示 ready/错误状态 |
 | TASK-003 | 项目管理完整闭环 | 002 | projects UI/API/service/repository/migration | projects contract | 待开发 | 新建、重命名、切换项目，重启后仍存在 |
 | TASK-004 | 会议粘贴导入与分块查看 | 003 | meeting UI/API/service/storage | meetings contract、文件事务 | 待开发 | 粘贴 5 万字并逐块查看，刷新/重启数据仍存在 |
 | TASK-005 | TXT/MD/DOCX 文件导入 | 004 | meeting import、Tauri picker、解析安全 | parser 限制、meeting import contract | 待开发 | 三种文件真实导入，损坏/超限文件有明确错误 |
