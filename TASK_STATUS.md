@@ -36,7 +36,8 @@
 | FE-014 | 前端执行模型/meetings | 通过 Tauri 文件选择器导入 TXT、MD、DOCX | 阻塞 | 2026-09-21 | 仓库尚无 `src-tauri` 与 Tauri capability，受控 file handle 不可用；不伪造浏览器路径 |
 | FE-018/019 | 前端执行模型/diagrams | 图形列表、类型/状态筛选、详情、warning、来源与 revision 历史 | 进行中 | 2026-09-21 | Diagram API 与 `@pm/contracts` 的 diagrams DTO/Schema 尚未实现；见 COM-021 |
 | FE-020～FE-032 | 未领取 | 编辑器技术闸门、DrawioBridge、revision 保存、版本历史、导出、连接设置、诊断、CSP、无障碍与 E2E | 未领取 | 2026-09-21 | FE-020 编辑器闸门未通过前不得启动 FE-021～FE-025 |
-| DB-001～DB-018 | 后端执行模型/backend-local | 迁移框架、运行参数、初始 Schema、文件路径契约、Repository、备份恢复、查询计划与发布验收 | 进行中 | 2026-09-22 | DB-001（迁移框架）、DB-003（初始 Schema）、DB-004（文件路径契约）随 BE-007/BE-008 完成；DB-002（运行参数 ADR）、DB-005（Repository 基类）、DB-006（备份恢复）及 DP2/DP3 各表 repository 未开工 |
+| DB-001～DB-006 | 后端执行模型/backend-local | 迁移框架、运行参数、初始 Schema、文件路径契约、Repository 基类、备份恢复 | 完成 | 2026-09-22 | 无。DP1 六项全部完成并各有实测用例；未覆盖的边界（断电、映射网络盘、磁盘满、并发翻页）逐项记在对应 ADR，不以"基本完成"收尾 |
+| DB-007～DB-018 | 后端执行模型/backend-local | 各领域表 repository、导出元数据决策、查询计划、完整性审计、崩溃恢复、迁移回归与发布验收 | 未领取 | 2026-09-22 | 前置 DP1 已完成，可开工；DB-013 需先定 Q-DB-003（延迟导出是否新增 `revision_artifacts`） |
 
 ## 2 阻塞汇总
 
@@ -59,6 +60,9 @@
 5. 本机 `.git/refs` 下新建多级目录会静默失败（`fix/xxx`、`feature/xxx`），分支名请使用顶层名称；`packed-refs` 必须写成 `<sha> <refname>`、按 refname 排序且行尾不得带 CR，否则 `for-each-ref` 报 `ignoring ref with broken name`。索引损坏时用 `git read-tree --reset HEAD` 重建，不要手工删除 `.git/index`。见 COM-034。
 6. 未推送的本地提交在本机不持久：同类事故已发生两次（COM-033、COM-037），本表、修复提交和闸门成果都曾整批丢失。任务包完成后应尽快推送；推送属对外操作，需用户授权。
 7. 迁移文件目前以 `packages/storage/migrations/*.sql` 的形式存在，运行时由 `loadMigrationsFromDirectory()` 读盘。sidecar 打成 externalBin 后是否随二进制分发尚未决定（COM-038）；在结论落地前，桌面壳启动不能依赖运行时读盘，BE-036 之前的启动流程也不应假设迁移目录一定存在。
+8. DP1 全部完成后，数据库仍未被 daemon 打开：`pnpm runtime:dev` 不会迁移数据库，页面也没有新增可联调接口。`openRuntimeDatabase` 是 BE-009 起各 service 的唯一入口；把句柄接进 HTTP 路由属于第一个需要它的 API 任务（BE-013）。因此 B-3 不因本批完成而变化。
+9. `@pm/contracts` 此前没有任何源码 import（两个包声明了依赖但未使用），缺少 `main`/`types`/`exports` 的缺口直到 storage 成为第一个真实使用者才暴露，见 COM-042。该缺口已修，后续需要共用契约的包（BE-025、BE-026）不再被同一问题阻断。
+10. `DB-002` 的 `synchronous=NORMAL` 只承诺进程崩溃级别，断电不在承诺范围，需验收方确认“崩溃”边界，见 COM-044。
 
 ## 4 本次验证记录（2026-09-21）
 
@@ -87,3 +91,17 @@
 | 文件存储 | 同上，`packages/storage/src/fileStore.test.ts` | 14 个用例通过：原子写、哈希、覆盖、13 种越界路径、Unicode、junction 逃逸、链接文件、rename 失败无残留、孤儿清理、路径构造 |
 
 未执行：磁盘满故障注入（迁移与落盘均无可控注入手段）、同路径并发写、迁移文件在 externalBin 打包后的分发验证。
+
+### 4.2 DB-002 / DB-005 / DB-006 验证记录（2026-09-22）
+
+执行环境同上。`pnpm check` 串行执行两次 typecheck 与两组测试，exit 0；`vite build` 通过（96 个模块，exit 0）。
+
+| 检查 | 命令 | 结果 |
+| --- | --- | --- |
+| 契约入口 | `tsc -p tsconfig.backend.json --noEmit` | 通过（exit 0）。此前 `@pm/contracts` 缺 `main`/`types`/`exports`，storage 作为第一个真实使用者报 TS2307，见 COM-042 |
+| 运行参数 DB-002 | `vitest run --config vitest.backend.config.mjs packages/storage/src/runtimeParams.test.ts` | 9 个用例通过：参数落地并读回验证、拒绝相对/UNC/指向文件的路径、WAL 持久在库头、写者持锁时读者仍读到已提交快照且第二写者等待、`TRUNCATE` 检查点把 `-wal` 清为 0 字节、真实子进程 `SIGKILL` 后已提交 25 行完整保留而未提交事务不残留 |
+| Repository 基类 DB-005 | 同上，`packages/storage/src/repository.test.ts` 与 `ids.test.ts` | 25 个用例通过：UTC 毫秒统一且拒绝无毫秒形式、ULID 同毫秒单调与时钟回拨钳制、游标形状校验、1000 行共用同一时间戳按 100 条翻 10 页不重不漏、软删除默认过滤、事务回滚保留原始错误、标识符白名单与保留参数名 |
+| 备份恢复 DB-006 | 同上，`packages/storage/src/backup.test.ts` 与 `runtimeDatabase.test.ts` | 17 个用例通过：备份取备份时刻的已提交快照、并发写者持有未提交事务时备份不含该行、两份损坏备份被识别为不可用、恢复后库仍可继续写入、恢复时清除目标旧 `-wal`/`-shm`、保留策略只删已发布文件、迁移前备份确为迁移前状态（不含新表）、库版本高于应用时拒绝启动、无库文件的目录诊断不会创建库 |
+| 后端测试（汇总） | `vitest run --config vitest.backend.config.mjs` | 20 个文件 / 128 个用例全部通过（exit 0） |
+
+未执行：断电与硬复位验证（需真实断电或虚拟机强杀）、映射网络驱动器的识别、磁盘满故障注入、并发翻页与并发归档竞争、行值比较是否命中索引的 `EXPLAIN QUERY PLAN`（属 DB-014）。

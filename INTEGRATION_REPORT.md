@@ -13,7 +13,7 @@
 | --- | --- | --- |
 | B-1 | BE-006 storage gate 与 BE-020 layout gate 未进入 `dev` | **已解除**。两个闸门的成果与决策文档已在 `dev` 上受跟踪 |
 | B-2 | BE-020 泳道视觉评审与坐标快照未完成 | 未解除（属验收项本身，不是合并问题） |
-| B-3 | 会议与图形 API 未实现（后端只有 health 与鉴权基线） | 未解除。这是当前唯一的实质性功能缺口 |
+| B-3 | 会议与图形 API 未实现（后端只有 health 与鉴权基线） | 未解除，但前置已清空：DB-001～DB-006 于 §10、§11 全部完成，BE-009～BE-015 无遗留前置。这是当前唯一的实质性功能缺口 |
 | B-4 | 缺少 `src-tauri` 桌面壳与 capability | 未解除 |
 | B-5 | `REVIEW_REPORT.md` 不存在 | 未解除（文档缺口） |
 | B-6 | 浏览器端无法到达 Runtime | **已解除**，并有真实浏览器证据 |
@@ -122,11 +122,11 @@ BE-006 / BE-020 的内容与 `origin` 上 `feature/backend-storage-gate-backend-
 
 ## 8 剩余缺口与下一步
 
-1. **B-3（最高优先级）**：后端仍只有 `health` 与鉴权基线。BE-007 / BE-008 已完成（见 §10），`BE-009～BE-015`（项目与会议 API）可以直接开工，它决定 FE-012～FE-017 能否真实联调。DB-002（运行参数 ADR）、DB-005（Repository 基类）、DB-006（备份恢复）仍是 repository 落地前的前置。
+1. **B-3（最高优先级）**：后端仍只有 `health` 与鉴权基线。DB-001～DB-006 已全部完成（见 §10、§11），`BE-009～BE-015`（项目与会议 API）没有遗留前置，可以直接开工，它决定 FE-012～FE-017 能否真实联调。数据层入口是 `openRuntimeDatabase`；把句柄接进 HTTP 路由属于第一个需要它的 API 任务（BE-013）。
 2. **B-2**：BE-020 需要视觉评审环境才能补 3–6 泳道与坐标快照。
 3. **B-4**：`src-tauri` 与最小 capability 就绪后，FE-014 文件导入才可开工；届时应移除 §4.4 的开发期注入插件。
-4. **推送**：`dev` 上 8 个提交（含本轮）尚未推送。未推送提交在本机不持久，建议尽快推送；推送属对外操作，等用户确认。
-5. **待用户确认**：`origin/HEAD` 指向 `feature/backend-monorepo-local`，建议改指 `dev`（COM-031）。
+4. **推送**：`dev` 上有 24 个提交尚未推送（`origin/dev` 之后的全部本地提交）。未推送提交在本机已丢失两次，建议尽快推送；推送属对外操作，等用户确认。
+5. **待用户确认**：`origin/HEAD` 指向 `feature/backend-monorepo-local`，建议改指 `dev`（COM-031）；DB-002 的 `synchronous=NORMAL` 只承诺进程崩溃级别，断电是否纳入验收口径需确认（COM-044）。
 
 ## 9 已知遗留物
 
@@ -154,3 +154,32 @@ BE-006 / BE-020 的内容与 `origin` 上 `feature/backend-storage-gate-backend-
 未覆盖：磁盘满与同路径并发写（COM-040，无可控注入手段）；迁移文件在 externalBin 打包后的分发方式（COM-038）。
 
 注意：这仍是库层实现，尚未接入 daemon 启动流程。数据库不会在 `pnpm runtime:dev` 时自动迁移，页面也不会因此多出任何可联调的接口——B-3 依旧未解除。
+
+## 11 DB-002 / DB-005 / DB-006 与前置清空（2026-09-22）
+
+目标：把 BE-009～BE-015 之前剩下的三个数据层前置做完，并顺手清掉已发现但尚未爆发的阻断点。
+
+| 交付 | 文件 | 覆盖 |
+| --- | --- | --- |
+| 运行参数（DB-002） | `packages/storage/src/runtimeParams.ts` | `foreign_keys`/WAL/`busy_timeout`/`synchronous`/`autocheckpoint`/`cache_size` 锁定，本机可写目录校验，检查点与完整性检查 |
+| Repository 基类（DB-005） | `packages/storage/src/repository.ts`、`ids.ts` | 事务、UTC 毫秒时间、单调 ULID、软删除默认过滤、行值游标分页 |
+| 备份恢复（DB-006） | `packages/storage/src/backup.ts` | 在线备份、发布前校验、损坏识别、恢复演练、保留策略 |
+| 启动入口 | `packages/storage/src/runtimeDatabase.ts` | 目录校验 → 打开 → 迁移计划 → 迁移前备份 → 迁移；另有只读诊断入口 |
+
+提交：`56c2405`（补交漏跟踪的 schema 约束用例）、`b7c0fb4` 与 `326e910`（BE-006/BE-020 分支血缘合并）、`7e8d92f`、`3636e12`、`3f01f06`、`3834c40`。
+
+四个不显然的判断：
+
+1. **在线备份产物必须转出 WAL**（COM-043）。备份 API 会连源库头部一起复制，目标因此也是 WAL 模式，它刚写入的页可能落在 `-wal` 伴生文件里；只 rename 主文件等于把备份的一部分丢掉。这是测试实测发现的，不是推理出来的。
+2. **`synchronous=NORMAL` 只承诺进程崩溃级别**（COM-044）。SQLite 文档明确 NORMAL 在 WAL 下"应用崩溃后事务仍持久"，只在断电或硬复位时可能回退；验收口径若指断电，必须改 `FULL` 并重测。
+3. **写事务默认 `BEGIN IMMEDIATE`**。WAL 下"先读后写"的 deferred 事务可能撞上 `SQLITE_BUSY_SNAPSHOT`，提前取写锁把它变成可被 `busy_timeout` 吸收的等待。
+4. **游标携带 `(排序值, id)` 并用 SQLite 行值比较**。只用时间戳作游标时，同一毫秒内的行会重复或漏掉；1000 行共用同一时间戳按 100 条翻 10 页的用例覆盖了这一点。
+
+顺带清掉两个会阻断后续包的问题：
+
+- **分支血缘缺失**（COM-041）：BE-006/BE-020 的内容在事故后以普通提交重做，两个 feature 分支在 `dev` 上没有合并血缘。已用 `--no-ff -X ours` 合并，并按下述判据确认零内容变更：合并前后 `HEAD^{tree}` 均为 `d55e975a23a06543c8f28b20ed90e7d20ee9e2a8`，`git branch --no-merged dev` 输出为空。
+- **`@pm/contracts` 缺少入口字段**（COM-042）：该包此前没有任何源码 import（两个包声明了依赖却没用），因此 `main`/`types`/`exports` 缺失一直没暴露；storage 成为第一个真实使用者时报 `TS2307`。补上后 `tsc -p tsconfig.backend.json --noEmit` 由 exit 2 转为 exit 0，BE-025、BE-026 等需要共用契约的包不再撞同一堵墙。
+
+验证（`pnpm check`，exit 0）：后端 20 个文件 / 128 个用例全部通过，其中运行参数 9 个、Repository 与 ULID 25 个、备份与启动入口 17 个。`vite build` 通过（96 个模块）。真实子进程 `SIGKILL` 验证了两侧：已提交的 25 行完整保留，未提交事务不残留。
+
+未覆盖：断电与硬复位、映射网络驱动器识别、磁盘满故障注入、并发翻页与并发归档竞争、行值比较的 `EXPLAIN QUERY PLAN`（属 DB-014）。
