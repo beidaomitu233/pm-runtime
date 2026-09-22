@@ -1,29 +1,40 @@
 import {
-  type ApiEnvelope,
-  type ApiErrorBody,
   type HealthResponse,
-  type ProjectListResponse,
-  type ProjectSummary,
-  isHealthResponse,
-  isProjectListResponse,
-  isProjectSummary,
-} from '../types/contracts'
-import {
-  type MeetingContentChunk,
-  type MeetingDetail,
-  type MeetingListResponse,
+  type MeetingContent,
   type MeetingSummary,
-  isMeetingContentChunk,
-  isMeetingDetail,
-  isMeetingListResponse,
-  isMeetingSummary,
-} from '../types/meetingContracts'
-import {
+  type Page,
+  type Project,
+  type SuccessEnvelope,
   type DiagramDetail,
-  type DiagramListResponse,
-  isDiagramDetail,
-  isDiagramListResponse,
-} from '../types/diagramContracts'
+  type DiagramSummary,
+  parseDiagramDetail,
+  parseDiagramList,
+  parseErrorEnvelope,
+  parseHealthResponse,
+  parseMeetingContent,
+  parseMeetingList,
+  parseMeetingSummary,
+  parseProject,
+  parseProjectList,
+} from '@pm/contracts'
+
+export interface RuntimeConfig {
+  baseUrl: string
+  sessionToken?: string
+}
+
+declare global {
+  interface Window {
+    __PM_RUNTIME_CONFIG__?: RuntimeConfig
+  }
+}
+
+type RuntimeErrorBody = {
+  code: string
+  message: string
+  details?: unknown
+  retryable?: boolean
+}
 
 export class RuntimeApiError extends Error {
   readonly code: string
@@ -32,7 +43,7 @@ export class RuntimeApiError extends Error {
   readonly details?: unknown
   readonly retryable: boolean
 
-  constructor(body: ApiErrorBody, options: { requestId?: string; status?: number } = {}) {
+  constructor(body: RuntimeErrorBody, options: { requestId?: string; status?: number } = {}) {
     super(body.message)
     this.name = 'RuntimeApiError'
     this.code = body.code
@@ -59,7 +70,7 @@ type RequestOptions = Omit<RequestInit, 'body'> & {
   timeoutMs?: number
 }
 
-type Parser<T> = (value: unknown) => value is T
+type Parser<T> = (value: unknown) => T
 
 function getConfig() {
   return window.__PM_RUNTIME_CONFIG__ ?? { baseUrl: '/api/v1' }
@@ -73,7 +84,26 @@ function normalizeBaseUrl(baseUrl: string) {
   return baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl
 }
 
-function parseFailure(value: unknown): { error: ApiErrorBody; requestId?: string } | null {
+function parseFailureStrict(value: unknown): { error: RuntimeErrorBody; requestId?: string } | null {
+  try {
+    const envelope = parseErrorEnvelope(value)
+    return {
+      error: {
+        code: envelope.error.code,
+        message: envelope.error.message,
+        details: envelope.error.details,
+        retryable: envelope.error.retryable,
+      },
+      requestId: envelope.requestId,
+    }
+  } catch {
+    return null
+  }
+}
+
+function parseFailure(value: unknown): { error: RuntimeErrorBody; requestId?: string } | null {
+  const strict = parseFailureStrict(value)
+  if (strict) return strict
   if (!value || typeof value !== 'object') return null
   const candidate = value as Record<string, unknown>
   if (!candidate.error || typeof candidate.error !== 'object') return null
@@ -127,11 +157,15 @@ async function request<T>(path: string, options: RequestOptions, parser: Parser<
       )
     }
 
-    if (!payload || typeof payload !== 'object' || !('data' in payload) || typeof (payload as ApiEnvelope<T>).requestId !== 'string') {
+    if (!payload || typeof payload !== 'object' || !('data' in payload) || typeof (payload as SuccessEnvelope<unknown>).requestId !== 'string') {
       throw new RuntimeResponseError('Runtime 返回结构不符合当前版本合同。', responseRequestId)
     }
-    const data = (payload as ApiEnvelope<unknown>).data
-    if (!parser(data)) throw new RuntimeResponseError('Runtime 返回的数据未通过前端合同校验。', responseRequestId)
+    let data: T
+    try {
+      data = parser((payload as SuccessEnvelope<unknown>).data)
+    } catch {
+      throw new RuntimeResponseError('Runtime 返回的数据未通过前端合同校验。', responseRequestId)
+    }
     return data
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {
@@ -147,17 +181,17 @@ async function request<T>(path: string, options: RequestOptions, parser: Parser<
 }
 
 export const apiClient = {
-  getHealth: () => request<HealthResponse>('/health', { method: 'GET', timeoutMs: 3_000 }, isHealthResponse),
-  listProjects: (query = '') => request<ProjectListResponse>(`/projects${query}`, { method: 'GET' }, isProjectListResponse),
-  getProject: (projectId: string) => request<ProjectSummary>(`/projects/${encodeURIComponent(projectId)}`, { method: 'GET' }, isProjectSummary),
-  createProject: (name: string, description?: string) => request<ProjectSummary>('/projects', { method: 'POST', body: { name, ...(description ? { description } : {}) }, idempotencyKey: crypto.randomUUID() }, isProjectSummary),
-  renameProject: (projectId: string, name: string) => request<ProjectSummary>(`/projects/${encodeURIComponent(projectId)}`, { method: 'PATCH', body: { name }, idempotencyKey: crypto.randomUUID() }, isProjectSummary),
-  listMeetings: (projectId: string, query = '') => request<MeetingListResponse>(`/projects/${encodeURIComponent(projectId)}/meetings${query}`, { method: 'GET' }, isMeetingListResponse),
-  createMeeting: (projectId: string, title: string, text: string) => request<MeetingSummary>(`/projects/${encodeURIComponent(projectId)}/meetings`, { method: 'POST', body: { title, text }, idempotencyKey: crypto.randomUUID() }, isMeetingSummary),
-  getMeeting: (meetingId: string) => request<MeetingDetail>(`/meetings/${encodeURIComponent(meetingId)}`, { method: 'GET' }, isMeetingDetail),
-  getMeetingContent: (meetingId: string, offset: number, limit = 8000) => request<MeetingContentChunk>(`/meetings/${encodeURIComponent(meetingId)}/content?offset=${offset}&limit=${limit}`, { method: 'GET' }, isMeetingContentChunk),
-  listDiagrams: (projectId: string, query = '') => request<DiagramListResponse>(`/projects/${encodeURIComponent(projectId)}/diagrams${query}`, { method: 'GET' }, isDiagramListResponse),
-  getDiagram: (diagramId: string) => request<DiagramDetail>(`/diagrams/${encodeURIComponent(diagramId)}`, { method: 'GET' }, isDiagramDetail),
+  getHealth: () => request<HealthResponse>('/health', { method: 'GET', timeoutMs: 3_000 }, parseHealthResponse),
+  listProjects: (query = '') => request<Page<Project>>(`/projects${query}`, { method: 'GET' }, parseProjectList),
+  getProject: (projectId: string) => request<Project>(`/projects/${encodeURIComponent(projectId)}`, { method: 'GET' }, parseProject),
+  createProject: (name: string, description?: string) => request<Project>('/projects', { method: 'POST', body: { name, ...(description ? { description } : {}) }, idempotencyKey: crypto.randomUUID() }, parseProject),
+  renameProject: (projectId: string, name: string) => request<Project>(`/projects/${encodeURIComponent(projectId)}`, { method: 'PATCH', body: { name }, idempotencyKey: crypto.randomUUID() }, parseProject),
+  listMeetings: (projectId: string, query = '') => request<Page<MeetingSummary>>(`/projects/${encodeURIComponent(projectId)}/meetings${query}`, { method: 'GET' }, parseMeetingList),
+  createMeeting: (projectId: string, title: string, text: string) => request<MeetingSummary>(`/projects/${encodeURIComponent(projectId)}/meetings`, { method: 'POST', body: { title, text }, idempotencyKey: crypto.randomUUID() }, parseMeetingSummary),
+  getMeeting: (meetingId: string) => request<MeetingSummary>(`/meetings/${encodeURIComponent(meetingId)}`, { method: 'GET' }, parseMeetingSummary),
+  getMeetingContent: (meetingId: string, offset: number, limit = 8000) => request<MeetingContent>(`/meetings/${encodeURIComponent(meetingId)}/content?offset=${offset}&limit=${limit}`, { method: 'GET' }, parseMeetingContent),
+  listDiagrams: (projectId: string, query = '') => request<Page<DiagramSummary>>(`/projects/${encodeURIComponent(projectId)}/diagrams${query}`, { method: 'GET' }, parseDiagramList),
+  getDiagram: (diagramId: string) => request<DiagramDetail>(`/diagrams/${encodeURIComponent(diagramId)}`, { method: 'GET' }, parseDiagramDetail),
 }
 
 export function isRetryableRuntimeError(error: unknown) {

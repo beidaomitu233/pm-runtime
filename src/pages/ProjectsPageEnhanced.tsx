@@ -2,15 +2,15 @@ import type { FormEvent, ReactNode } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from 'react-router-dom'
+import type { Project } from '@pm/contracts'
 import { apiClient, RuntimeApiError } from '../api/client'
 import { PageError } from '../app/AppShell'
-import type { ProjectSummary } from '../types/contracts'
 import './projects.css'
 
 export function ProjectsPageEnhanced() {
   const [search, setSearch] = useState('')
   const [dialog, setDialog] = useState<'create' | 'rename' | null>(null)
-  const [renameTarget, setRenameTarget] = useState<ProjectSummary | null>(null)
+  const [renameTarget, setRenameTarget] = useState<Project | null>(null)
   const projects = useQuery({
     queryKey: ['projects', search],
     queryFn: () => apiClient.listProjects(buildQuery(search)),
@@ -49,7 +49,7 @@ export function ProjectsPageEnhanced() {
   </PageFrame>
 }
 
-function ProjectCard({ project, onRename }: { project: ProjectSummary; onRename: () => void }) {
+function ProjectCard({ project, onRename }: { project: Project; onRename: () => void }) {
   return <article className="project-card"><Link className="project-card-link" to={`/projects/${project.id}/meetings`}><div className="project-card-icon">{project.name.slice(0, 1)}</div><div className="project-card-copy"><h2>{project.name}</h2><p>{project.description || '暂无项目说明'}</p><time dateTime={project.updatedAt}>最近更新：{formatDate(project.updatedAt)}</time></div></Link><button className="icon-button" aria-label={`重命名 ${project.name}`} title="重命名" onClick={onRename}>···</button></article>
 }
 

@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { apiClient } from '../api/client'
 import { MeetingsPageEnhanced } from './MeetingsPageEnhanced'
 
-const meeting = { id: '01J00000000000000000000000', projectId: '01J00000000000000000000001', title: '产品评审', sourceType: 'paste' as const, charCount: 120, importStatus: 'ready' as const, createdAt: '2026-09-21T00:00:00.000Z', updatedAt: '2026-09-21T00:00:00.000Z' }
+const meeting = { id: '01J00000000000000000000000', projectId: '01J00000000000000000000001', title: '产品评审', sourceType: 'paste' as const, originalFilename: null, charCount: 120, byteCount: 480, status: 'ready' as const, errorCode: null, createdAt: '2026-09-21T00:00:00.000Z', updatedAt: '2026-09-21T00:00:00.000Z' }
 
 function renderPage() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
