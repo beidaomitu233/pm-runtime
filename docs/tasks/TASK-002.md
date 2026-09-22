@@ -1,6 +1,6 @@
 # TASK-002 Runtime 启动、Tauri 与存储底座
 
-状态：待开发  
+状态：待验收（含阻塞子项，见文末验收结果）  
 依赖：TASK-001  
 业务目标：让当前前端骨架第一次连接真实本地 Runtime，形成“启动 Desktop → 启动 sidecar → 健康检查 → RuntimeGate 显示真实状态”的最小可运行闭环，同时完成 SQLite/sidecar 的关键技术闸门。
 
@@ -23,5 +23,36 @@
 仍需完成（本任务验收缺口）：
 
 - **完全没有 `src-tauri/`**（集成报告 B-4）：Tauri 2 窗口、最小 capability、sidecar 生命周期托管、生产环境 baseUrl/sessionToken 注入（替换或并存开发期注入）。
-- Windows 自包含 sidecar 打包闸门：BE-006 ADR 标注“部分验证，Windows 干净机打包待验证”，未过前任务不得标已完成。
+- Windows 自包含 sidecar 打包闸门：BE-006 ADR 标注"部分验证，Windows 干净机打包待验证"，未过前任务不得标已完成。
 - 与 TASK-001 收口后的 health contracts 对齐复验。
+
+## 验收结果（2026-09-22，分支 `TASK-002`）
+
+已完成并验证：
+
+- `src-tauri/` 已建立：Tauri 2 窗口、`capabilities/default.json`（仅 `core:default`）、
+  `runtime_start`/`runtime_stop` 命令（sidecar 探活复用/拉起/轮询/退出回收）、生产 CSP。
+- 生产注入唯一来源：前端 `initRuntimeConfig()` 渲染前 `invoke('runtime_start')`；
+  开发期 vite 注入边界收口（`apply:'serve'` 仅浏览器 dev，`tauri dev` 以 Tauri 注入覆盖）。
+  4 个新注入单测；`src-tauri/README.md` 记录来源边界与阻塞。
+- COM-051 收敛完成（COM-052）：health 四态内取值，`starting` 永不返回，
+  before-start `unavailable` / start 后 `ready` 均过 `parseHealthResponse`。
+- COM-054：Node SEA 自包含 sidecar 冒烟**本机通过**——剥离 PATH 中 Node 启动，
+  6 项断言全过（runtime.ready、health 合同校验、401/403、第二实例
+  `RUNTIME_ALREADY_RUNNING`、state 合法且 token 不泄漏）；fuse 自动探测（文档写死值
+  在本机 Node 22.23.2 不存在）。
+- 门禁：`pnpm check` exit 0（前端 6 文件 20 用例；后端 21 文件 134 通过、1 环境跳过）、
+  `pnpm build` exit 0（294 模块）。
+- 自动测试覆盖验收清单既有项：合法/错误 token、畸形请求与 body limit、旧/损坏
+  runtime-state、重复启动与第二实例、migration 重复执行与失败回滚（BE-007 13 用例）。
+
+阻塞与未验证（不得虚报为通过）：
+
+- **本机无 Rust 工具链**（rustc/cargo/rustup 均不可用）：`cargo check`、`tauri dev/build`
+  未执行，Rust 代码未经编译验证；"启动 Desktop → RuntimeGate 显示 Runtime 已连接"
+  的端到端人工验收无法在本机完成。装好工具链后需：`pnpm tauri icon` 生成图标 →
+  打开 `bundle.active` → `pnpm tauri dev` 联调。
+- **干净 Windows VM 验证缺失**：SEA 冒烟为本机开发机证据；BE-006 ADR 状态保持
+  "部分验证，Windows 干净机打包待验证"；better-sqlite3 原生模块进 SEA、SEA 内
+  备份/重启恢复、BE-038 发布打包均未开始。
+- 按 TASK 文档要求，本任务状态只到"待验收"，不标"已完成"。

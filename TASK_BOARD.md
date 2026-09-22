@@ -10,7 +10,7 @@
 | TASK | 功能切片 | 依赖 | 主要修改范围 | 公共冲突区 | 状态 | 可视化验收 |
 |---|---|---|---|---|---|---|
 | TASK-001 | 工程基线与共享合同收口 | 无 | workspace、contracts、前端合同迁移 | contracts、根配置 | 已完成 | 前端与后端 workspace 可统一安装、typecheck、test、build |
-| TASK-002 | Runtime 启动、Tauri 与存储底座 | 001 | src-tauri、runtime lifecycle、HTTP、storage 基线 | Tauri 配置、middleware、migration runner | 开发中 | Desktop 启动后 RuntimeGate 真实显示 ready/错误状态 |
+| TASK-002 | Runtime 启动、Tauri 与存储底座 | 001 | src-tauri、runtime lifecycle、HTTP、storage 基线 | Tauri 配置、middleware、migration runner | 待验收 | Desktop 启动后 RuntimeGate 真实显示 ready/错误状态（本机无 Rust 工具链，端到端待补跑） |
 | TASK-003 | 项目管理完整闭环 | 002 | projects UI/API/service/repository/migration | projects contract | 待开发 | 新建、重命名、切换项目，重启后仍存在 |
 | TASK-004 | 会议粘贴导入与分块查看 | 003 | meeting UI/API/service/storage | meetings contract、文件事务 | 待开发 | 粘贴 5 万字并逐块查看，刷新/重启数据仍存在 |
 | TASK-005 | TXT/MD/DOCX 文件导入 | 004 | meeting import、Tauri picker、解析安全 | parser 限制、meeting import contract | 待开发 | 三种文件真实导入，损坏/超限文件有明确错误 |
@@ -29,7 +29,7 @@
 | TASK | 已在 dev 中存在 | 仍需完成（本任务核心缺口） |
 |---|---|---|
 | TASK-001 | `@pm/contracts` 全套（schemas/types/validation/diagram*/fixtures+测试，COM-019/042）；pnpm workspace、`pnpm-lock.yaml`、`check` 脚本（COM-026） | 已收口（本任务）：`src/types/contracts.ts`、`meetingContracts.ts`、`diagramContracts.ts` 删除，前端 `src/api` 与页面全部改为消费 `@pm/contracts`，字段/Schema 按 `API_CONTRACT.md` 补全（COM-046/050）；`pnpm check`/`pnpm build` 全绿，lockfile 冻结安装可复现 |
-| TASK-002 | daemon/lifecycle/HTTP 基线+session token+统一 envelope（BE-004/005、COM-029/030/036）；migration runner、runtime DB、file store、backup、SQLite 闸门（BE-006/007/008、DB-002/005/006，ADR 见 `docs/decisions/`）；健康检查与浏览器开发期注入已通（B-6 已解） | 完全没有 `src-tauri/`（B-4）；Tauri capability、sidecar 生命周期接入、Tauri 注入替换开发期注入；Windows 自包含 sidecar 打包闸门未过（BE-006 ADR 标部分验证/阻塞） |
+| TASK-002 | daemon/lifecycle/HTTP 基线+session token+统一 envelope（BE-004/005、COM-029/030/036）；migration runner、runtime DB、file store、backup、SQLite 闸门（BE-006/007/008、DB-002/005/006，ADR 见 `docs/decisions/`）；健康检查与浏览器开发期注入已通（B-6 已解） | 已补（本任务）：`src-tauri/`（窗口/capability/`runtime_start` 生命周期/生产注入，COM-053）、COM-051 health 收敛（COM-052）、Node SEA 自包含 sidecar 本机冒烟 6 项全过（COM-054，无 Node PATH 启动）。仍缺：本机无 Rust 工具链→`cargo/tauri` 未编译、Desktop 端到端未跑；干净 Windows VM 与 better-sqlite3 进 SEA 未验证（BE-006 保持部分验证） |
 | TASK-003 | `projects` 表+两个索引（0001_initial.sql）、repository base+ULID（DB-005）、ProjectsPageEnhanced 前端页 | `GET/POST/PATCH /api/v1/projects` 业务路由与 project service 全缺（B-3）；Idempotency-Key、cursor 分页接入、重启持久化真实验证 |
 | TASK-004 | `meetings` 表+索引（0001_initial.sql）、Meetings/MeetingDetail Enhanced 前端页、file store 基础 | meeting service、粘贴导入 API、临时文件→hash→事务→原子落盘链路、`GET /meetings/:id/content` 分块读取全缺（B-3） |
 | TASK-007 | Diagram DSL Schema+业务校验器+Graph Model+sourceRefs 校验器+layout 闸门（BE-016~020、ELK 主选 ADR）；`diagrams`/`diagram_revisions`/`diagram_source_refs` 表；Diagrams Enhanced 前端页 | `POST /projects/:id/diagrams` render API、draw.io XML 生产 adapter、revision 1 落盘、MCP `pm.diagram.render/get`、失败状态闭环全缺 |

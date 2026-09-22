@@ -32,3 +32,30 @@ npx vitest run --config vitest.backend.config.mjs
 - 当前环境没有干净 Windows VM，尚未完成无 Node/开发依赖环境下的 sidecar externalBin 启动、备份和重启恢复验证。
 - 当前驱动首次安装未取得预构建绑定，使用 `node-gyp rebuild --release` 成功生成本机绑定；发布打包必须继续确认目标 Windows x64 的预构建或构建链方案。
 - 因此 BE-006 不勾选完成，任务状态保留为阻塞；BE-007 及依赖 SQLite 打包闸门的发布任务不能把本记录当作完整 Windows 安装验收证据。
+
+## 增量冒烟证据（2026-09-22，TASK-002 / COM-054，本机 Windows 非干净 VM）
+
+执行：
+
+```text
+pnpm sidecar:sea         # esbuild 打包 devMain → Node 22 SEA blob → postject 注入
+pnpm sidecar:smoke:sea   # 剥离 PATH 中 Node 后启动 exe 并断言
+```
+
+结果（exit 0）：
+
+- fuse 自动探测：本机 Node 22.23.2 的实际哨兵是
+  `NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2`（与旧文档示例值不同，写死会注入失败）。
+- 在 `PATH` 只保留 `C:\Windows\system32` 的环境变量下启动
+  `target/sea/pm-runtime-sidecar.exe`：stdout 出现 `runtime.ready`（127.0.0.1 随机端口）。
+- `GET /api/v1/health` 200，payload 通过 `@pm/contracts` `parseHealthResponse`，
+  无 session 业务路由 401 envelope、跨源 403。
+- 第二实例 `runtime.start_failed` + `RUNTIME_ALREADY_RUNNING`（不可能成为第二写入者）。
+- `runtime-state.json` 结构合法，session token 未出现在 health 响应中。
+
+仍未验证（本 ADR 状态不变的原因）：
+
+- 干净 Windows VM 从零安装/启动/备份/重启恢复。
+- better-sqlite3（原生模块）进入 SEA 的方案与实测——当前 sidecar 尚未加载 storage，
+  本冒烟不覆盖原生模块；业务接线后需重新打包并复测。
+- 发布级 BE-038（externalBin triple 命名、图标、签名、杀软误报）未开始。
