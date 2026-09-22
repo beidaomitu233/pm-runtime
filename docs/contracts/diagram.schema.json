@@ -1,0 +1,79 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:pm-runtime:diagram:0.1",
+  "title": "PM Runtime Diagram DSL 0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "diagramType", "title", "orientation", "lanes", "nodes", "edges", "sourceRefs"],
+  "properties": {
+    "schemaVersion": {"const": "0.1"},
+    "diagramType": {"enum": ["flowchart", "swimlane"]},
+    "title": {"type": "string", "minLength": 1, "maxLength": 200, "pattern": "\\S"},
+    "orientation": {"enum": ["horizontal", "vertical"]},
+    "lanes": {"type": "array", "maxItems": 50, "items": {"$ref": "#/definitions/lane"}},
+    "nodes": {"type": "array", "minItems": 2, "maxItems": 500, "items": {"$ref": "#/definitions/node"}},
+    "edges": {"type": "array", "minItems": 1, "maxItems": 2000, "items": {"$ref": "#/definitions/edge"}},
+    "sourceRefs": {"type": "array", "maxItems": 5000, "items": {"$ref": "#/definitions/sourceRef"}}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"diagramType": {"const": "swimlane"}}, "required": ["diagramType"]},
+      "then": {
+        "properties": {
+          "lanes": {"minItems": 1},
+          "nodes": {
+            "items": {
+              "if": {"properties": {"type": {"enum": ["task", "decision", "subprocess"]}}, "required": ["type"]},
+              "then": {"required": ["laneId"]}
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {"lanes": {"maxItems": 0}, "nodes": {"items": {"not": {"required": ["laneId"]}}}}
+      }
+    }
+  ],
+  "definitions": {
+    "localId": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$"},
+    "lane": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "name", "type"],
+      "properties": {
+        "id": {"$ref": "#/definitions/localId"},
+        "name": {"type": "string", "minLength": 1, "maxLength": 100, "pattern": "\\S"},
+        "type": {"enum": ["role", "department", "system"]}
+      }
+    },
+    "node": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "type", "label"],
+      "properties": {
+        "id": {"$ref": "#/definitions/localId"},
+        "type": {"enum": ["start", "end", "task", "decision", "subprocess"]},
+        "laneId": {"$ref": "#/definitions/localId"},
+        "label": {"type": "string", "minLength": 1, "maxLength": 200, "pattern": "\\S"},
+        "description": {"type": "string", "maxLength": 4000}
+      }
+    },
+    "edge": {
+      "type": "object", "additionalProperties": false,
+      "required": ["from", "to"],
+      "properties": {
+        "from": {"$ref": "#/definitions/localId"},
+        "to": {"$ref": "#/definitions/localId"},
+        "label": {"type": "string", "minLength": 1, "maxLength": 100, "pattern": "\\S"}
+      }
+    },
+    "sourceRef": {
+      "type": "object", "additionalProperties": false,
+      "required": ["sourceId", "nodeId", "startChar", "endChar"],
+      "properties": {
+        "sourceId": {"type": "string", "pattern": "^meeting_[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"},
+        "nodeId": {"$ref": "#/definitions/localId"},
+        "startChar": {"type": "integer", "minimum": 0},
+        "endChar": {"type": "integer", "minimum": 1}
+      }
+    }
+  }
+}

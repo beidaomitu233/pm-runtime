@@ -1,0 +1,12 @@
+const { execFileSync } = require('node:child_process');
+const { existsSync, mkdirSync, copyFileSync, cpSync, rmSync, readFileSync, writeFileSync } = require('node:fs');
+const { join } = require('node:path');
+const root = process.cwd();
+rmSync(join(root, 'dist'), { recursive: true, force: true });
+execFileSync(process.execPath, [join(root, 'node_modules', 'typescript', 'bin', 'tsc'), '-p', 'tsconfig.json'], { cwd: root, stdio: 'inherit' });
+mkdirSync(join(root, 'dist', 'resources', 'drawio'), { recursive: true });
+copyFileSync(join(root, 'resources', 'drawio', 'index.html'), join(root, 'dist', 'resources', 'drawio', 'index.html'));
+mkdirSync(join(root, 'dist', 'apps', 'desktop', 'src', 'renderer'), { recursive: true });
+const rendererHtml = readFileSync(join(root, 'apps', 'desktop', 'src', 'renderer', 'index.html'), 'utf8').replace('./renderer.ts', './renderer.js');
+writeFileSync(join(root, 'dist', 'apps', 'desktop', 'src', 'renderer', 'index.html'), rendererHtml);
+console.log('build ok: TypeScript compiled and offline drawio fixture copied');

@@ -1,0 +1,156 @@
+{
+  "schemaVersion": "0.1",
+  "diagramType": "swimlane",
+  "title": "需求变更处理技术样例",
+  "orientation": "horizontal",
+  "lanes": [
+    {
+      "id": "customer",
+      "name": "客户",
+      "type": "role"
+    },
+    {
+      "id": "pm",
+      "name": "产品经理",
+      "type": "role"
+    },
+    {
+      "id": "dev",
+      "name": "开发",
+      "type": "role"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "s",
+      "type": "start",
+      "label": "开始",
+      "laneId": "customer"
+    },
+    {
+      "id": "submit",
+      "type": "task",
+      "label": "提交需求变更",
+      "laneId": "customer"
+    },
+    {
+      "id": "scope",
+      "type": "task",
+      "label": "确认需求范围",
+      "laneId": "pm"
+    },
+    {
+      "id": "estimate",
+      "type": "task",
+      "label": "评估工期影响",
+      "laneId": "dev"
+    },
+    {
+      "id": "impact",
+      "type": "decision",
+      "label": "是否影响上线？",
+      "laneId": "pm"
+    },
+    {
+      "id": "confirm",
+      "type": "task",
+      "label": "确认调整方案",
+      "laneId": "customer"
+    },
+    {
+      "id": "accept",
+      "type": "decision",
+      "label": "是否接受调整？",
+      "laneId": "customer"
+    },
+    {
+      "id": "schedule",
+      "type": "task",
+      "label": "更新排期",
+      "laneId": "pm"
+    },
+    {
+      "id": "reduce",
+      "type": "task",
+      "label": "缩小变更范围",
+      "laneId": "pm"
+    },
+    {
+      "id": "develop",
+      "type": "task",
+      "label": "进入开发",
+      "laneId": "dev"
+    },
+    {
+      "id": "record",
+      "type": "task",
+      "label": "更新变更清单",
+      "laneId": "pm"
+    },
+    {
+      "id": "e",
+      "type": "end",
+      "label": "结束",
+      "laneId": "pm"
+    }
+  ],
+  "edges": [
+    {
+      "from": "s",
+      "to": "submit"
+    },
+    {
+      "from": "submit",
+      "to": "scope"
+    },
+    {
+      "from": "scope",
+      "to": "estimate"
+    },
+    {
+      "from": "estimate",
+      "to": "impact"
+    },
+    {
+      "from": "impact",
+      "to": "confirm",
+      "label": "是"
+    },
+    {
+      "from": "impact",
+      "to": "develop",
+      "label": "否"
+    },
+    {
+      "from": "confirm",
+      "to": "accept"
+    },
+    {
+      "from": "accept",
+      "to": "schedule",
+      "label": "是"
+    },
+    {
+      "from": "accept",
+      "to": "reduce",
+      "label": "否"
+    },
+    {
+      "from": "reduce",
+      "to": "scope"
+    },
+    {
+      "from": "schedule",
+      "to": "develop"
+    },
+    {
+      "from": "develop",
+      "to": "record"
+    },
+    {
+      "from": "record",
+      "to": "e"
+    }
+  ],
+  "sourceRefs": []
+}

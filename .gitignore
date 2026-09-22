@@ -1,0 +1,5 @@
+.architecture-review/
+.local-data/
+node_modules/
+dist/
+*.log
