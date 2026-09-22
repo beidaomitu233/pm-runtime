@@ -12,7 +12,7 @@
 4. 主键使用应用生成的 ULID `TEXT`；时间使用 UTC ISO 8601 `TEXT`，格式统一到毫秒。
 5. 文件路径只保存相对数据根目录的 `/` 分隔路径；禁止保存用户可控绝对路径。
 6. revision 不可变。任何编辑均新增 `diagram_revisions`，不得覆盖旧 revision 文件或行。
-7. v0.1 的项目、会议和图形采用软删除字段 `deleted_at`；revision 和 source ref 不单独软删除，随父级不可见。
+7. v0.1 的项目、会议和图形采用软删除字段 `deleted_at`；revision、artifact 和 source ref 不单独软删除，随父级不可见。
 8. 迁移只能向前执行；已发布迁移禁止修改，修复用新迁移。
 
 ## 2 数据目录
@@ -51,7 +51,8 @@ PMRuntime/
 | `projects` | 项目基础信息 | project list/get/create/update | Projects、全局项目切换 |
 | `meetings` | 会议元数据、解析状态、文件路径 | meeting list/get/import/content | Meetings、Meeting Detail |
 | `diagrams` | 图形主记录、状态和当前 revision | diagram list/render/get | Diagrams、Diagram Detail |
-| `diagram_revisions` | 不可变 DSL/XML/导出文件版本 | diagram get/save/export | Detail、Editor、Revision Drawer |
+| `diagram_revisions` | 不可变 DSL/XML 版本 | diagram get/save | Detail、Editor、Revision Drawer |
+| `revision_artifacts` | revision 的 drawio/SVG/PNG 导出产物与哈希 | diagram export/get | Editor、Revision Drawer、Export |
 | `diagram_source_refs` | 节点到会议文本范围的来源映射 | diagram get/render | Diagram Detail 来源追溯 |
 | `agent_adapters` | 宿主配置与最近检测状态 | connections preview/install/restore | Connections Settings |
 | `settings` | 非敏感应用设置 | settings get/update | Data Settings |
@@ -144,7 +145,7 @@ FTS5 不列入 v0.1 必须表。后续确认 keyword 检索时以新迁移增加
 | `diagram_type` | TEXT | 是 | 无 | `flowchart`、`swimlane` |
 | `title` | TEXT | 是 | 无 | 1-120 字符 |
 | `orientation` | TEXT | 是 | 无 | `horizontal`、`vertical` |
-| `status` | TEXT | 是 | `validating` | `validating`、`rendering`、`ready`、`validation_failed`、`render_failed` |
+| `status` | TEXT | 是 | `rendering` | `rendering`、`ready`、`render_failed` |
 | `current_revision_no` | INTEGER | 是 | 0 | `>=0`；ready 时 `>=1` |
 | `last_error_code` | TEXT | 否 | NULL | 最近生成错误码 |
 | `last_error_message` | TEXT | 否 | NULL | 去敏文案 |
@@ -174,11 +175,11 @@ FTS5 不列入 v0.1 必须表。后续确认 keyword 检索时以新迁移增加
 | `revision_no` | INTEGER | 是 | 无 | 从 1 递增 |
 | `base_revision_no` | INTEGER | 否 | NULL | revision 1 为 NULL；后续指向保存时基础版本号 |
 | `source` | TEXT | 是 | 无 | `agent_render`、`editor_save`、`history_fork` |
-| `dsl_schema_version` | TEXT | 是 | `0.1` | 当前固定 0.1 |
-| `dsl_rel_path` | TEXT | 否 | NULL | 人工编辑后无法同步 DSL 时允许 NULL，但需在 Communication 确认策略 |
+| `dsl_schema_version` | TEXT | 否 | NULL | 有 DSL 时为 `0.1`；无 DSL 的人工 revision 可为 NULL |
+| `dsl_status` | TEXT | 是 | `current` | `current`、`stale`、`none` |
+| `base_dsl_revision_no` | INTEGER | 否 | NULL | `stale` 时指向最近仍有有效 DSL 的 revision_no |
+| `dsl_rel_path` | TEXT | 否 | NULL | `current` 时必填；`stale/none` 时允许 NULL |
 | `drawio_rel_path` | TEXT | 是 | 无 | 必填可编辑源文件 |
-| `svg_rel_path` | TEXT | 否 | NULL | 导出后填充；若坚持 revision 完全不可变，改由 artifact 表，见 Q-DB-003 |
-| `png_rel_path` | TEXT | 否 | NULL | 同上 |
 | `content_sha256` | TEXT | 是 | 无 | 规范 drawio XML 哈希 |
 | `renderer_version` | TEXT | 是 | 无 | 生成/保存适配器版本 |
 | `change_note` | TEXT | 否 | NULL | 最多 300 字符 |
@@ -187,10 +188,33 @@ FTS5 不列入 v0.1 必须表。后续确认 keyword 检索时以新迁移增加
 唯一约束：`UNIQUE(diagram_id, revision_no)`。
 索引：`idx_revisions_diagram_created(diagram_id, revision_no DESC)`；`idx_revisions_hash(diagram_id, content_sha256)`。
 外键：`diagram_id REFERENCES diagrams(id) ON DELETE RESTRICT`。
-更新规则：除导出路径待决策外，禁止 UPDATE；新内容 INSERT 新 revision，并在同一事务更新 diagrams.current_revision_no。
-使用：revision API/MCP、Editor、版本历史、导出。
+更新规则：禁止 UPDATE；新内容 INSERT 新 revision，并在同一事务更新 diagrams.current_revision_no。人工编辑但未同步 DSL 时写 `dsl_status=stale` 和 `base_dsl_revision_no`，Runtime 不从 draw.io XML 反向推理 DSL。
+使用：revision API/MCP、Editor、版本历史。
 
-### 4.6 diagram_source_refs
+### 4.6 revision_artifacts
+
+用途：保存某个 revision 的导出产物。artifact 采用追加写，避免为了延迟导出修改不可变 revision 行。
+
+| 字段 | 类型 | 必填 | 默认值 | 约束/说明 |
+|---|---|---:|---|---|
+| `id` | TEXT | 是 | 应用生成 | 主键 ULID |
+| `revision_id` | TEXT | 是 | 无 | FK diagram_revisions.id |
+| `format` | TEXT | 是 | 无 | `drawio`、`svg`、`png` |
+| `options_json` | TEXT | 是 | `{}` | 规范化导出参数，例如 scale |
+| `options_hash` | TEXT | 是 | 无 | options_json 的 SHA-256，用于缓存键 |
+| `rel_path` | TEXT | 是 | 无 | 数据根目录内相对路径 |
+| `content_sha256` | TEXT | 是 | 无 | 64 位小写十六进制 |
+| `byte_count` | INTEGER | 是 | 0 | `>=0` |
+| `exporter_version` | TEXT | 是 | 无 | 生成该 artifact 的 adapter/版本 |
+| `created_at` | TEXT | 是 | 应用写入 | UTC |
+
+唯一约束：`UNIQUE(revision_id, format, options_hash)`。
+索引：`idx_revision_artifacts_revision(revision_id, created_at DESC)`。
+外键：`revision_id REFERENCES diagram_revisions(id) ON DELETE RESTRICT`。
+写入规则：先生成临时文件并校验/计算 hash，原子移动成功后 INSERT；失败不创建成功 artifact 行，也不修改 revision。
+使用：export API、Diagram detail、Editor。
+
+### 4.7 diagram_source_refs
 
 用途：保存 revision 内节点与会议规范文本片段的可追溯关系。
 
@@ -212,7 +236,7 @@ FTS5 不列入 v0.1 必须表。后续确认 keyword 检索时以新迁移增加
 业务约束：service 校验 meeting 与 diagram 属于同一 project；SQLite CHECK 无法跨表完成。
 使用：diagram detail、MCP diagram.get、追溯验收。
 
-### 4.7 agent_adapters
+### 4.8 agent_adapters
 
 用途：记录宿主 Adapter 的安装和检测元数据，不保存令牌。
 
@@ -237,7 +261,7 @@ FTS5 不列入 v0.1 必须表。后续确认 keyword 检索时以新迁移增加
 备份文件：保存在受控 backups 目录，数据库不保存原配置内容，只保存 backup ID/相对路径的方案需在 DB-008 确认。
 使用：connections API、Connections 页面。
 
-### 4.8 settings
+### 4.9 settings
 
 用途：保存非敏感设置；未知 key 由 service 拒绝。
 
@@ -252,7 +276,7 @@ FTS5 不列入 v0.1 必须表。后续确认 keyword 检索时以新迁移增加
 索引：主键。
 使用：settings API、Data Settings、Runtime 配置。
 
-### 4.9 idempotency_records
+### 4.10 idempotency_records
 
 用途：防止 Desktop 或 MCP 重试造成重复创建。
 
@@ -276,8 +300,10 @@ FTS5 不列入 v0.1 必须表。后续确认 keyword 检索时以新迁移增加
 | 表.字段 | 枚举 | 允许流转 |
 |---|---|---|
 | meetings.import_status | importing、ready、failed | importing -> ready/failed |
-| diagrams.status | validating、rendering、ready、validation_failed、render_failed | validating -> rendering/validation_failed；rendering -> ready/render_failed |
+| diagrams.status | rendering、ready、render_failed | rendering -> ready/render_failed；Schema/业务校验失败发生在 diagram 创建前 |
 | diagram_revisions.source | agent_render、editor_save、history_fork | 不流转，不可变 |
+| diagram_revisions.dsl_status | current、stale、none | Agent 渲染通常为 current；未同步 DSL 的人工编辑为 stale；确无 DSL 为 none |
+| revision_artifacts.format | drawio、svg、png | 不流转，artifact 追加写 |
 | agent_adapters.status | not_installed、installed、connected、error | 检测和安装服务更新；connected 仅表示最近一次探测结果 |
 
 枚举新增需新迁移和 contracts 变更。数据库 CHECK、后端 Schema 和前端判别联合必须在同一任务包更新。
@@ -314,7 +340,9 @@ FTS5 不列入 v0.1 必须表。后续确认 keyword 检索时以新迁移增加
 - 测试至少覆盖：空库建立、从每个已发布版本逐级升级、失败回滚、重复运行、checksum 被改写、磁盘满。
 - v0.1 不提供自动降级 migration。回滚应用前必须确认数据库兼容或恢复备份。
 
-## 10 数据库任务包
+## 10 历史数据库任务映射（停止独立派单）
+
+> 2026-09-22 起数据库工作合并进 `TASK_BOARD.md` 与 `docs/tasks/` 的全栈纵向 TASK。本节 DB-001～DB-018 仅用于追溯早期设计细节，不再作为数据库 Agent 的独立派单清单；其中原 DB-013 已由架构决策确定采用 `revision_artifacts`。
 
 ### DP1 基础与迁移 6 项
 
@@ -436,14 +464,10 @@ FTS5 不列入 v0.1 必须表。后续确认 keyword 检索时以新迁移增加
   验收标准：敏感 key 无法保存；重复写返回原结果。
   测试要求：白名单、冲突、TTL 清理。
 
-- [ ] 任务编号：DB-013
-  模块：导出元数据决策
-  目标：确定 SVG/PNG 路径是否更新 revision，或新增 `revision_artifacts` 表。
-  使用位置：Export service。
-  输入：Q-DB-003 结论；输出 migration/ADR。
-  异常：不可变 revision 与延迟导出冲突。
-  验收标准：选择后接口、Schema 和清理策略一致；不得一半写列一半写新表。
-  测试要求：重复导出、失败重试、缓存命中。
+- [x] 任务编号：DB-013（历史编号，架构已决策）
+  模块：导出元数据
+  结论：采用独立 `revision_artifacts` 表，延迟导出不 UPDATE `diagram_revisions`；实际实现与验收并入 TASK-010。
+  测试要求：重复导出、失败重试、缓存命中，以及导出前后 revision 行不变。
 
 ### DP3 质量恢复与发布 5 项
 

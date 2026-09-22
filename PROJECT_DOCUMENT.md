@@ -1,8 +1,12 @@
 # PM Runtime MVP v0.1 项目总文档
 
 版本：v0.1 开发规划稿
-日期：2026-09-21
-读者：产品负责人、架构与审查模型、前端模型、后端模型、数据库模型、测试人员
+日期：2026-09-21（2026-09-22 架构收口）
+读者：产品负责人、软件架构师、开发项目经理、全栈开发 Agent、审查与测试人员
+
+## 文档使用说明
+
+2026-09-22 起，开发组织方式从前端/后端/数据库横向拆分调整为全栈纵向 TASK。产品范围与 A01-A10 验收目标仍以本文为准；软件结构以 `ARCHITECTURE.md` 为准；接口与 MCP 合同以 `API_CONTRACT.md` 和 `packages/contracts` 为准；数据库以 `DATABASE_PLAN.md` 为准；任务派发和验收以 `TASK_BOARD.md`、`docs/tasks/` 为准。`FRONTEND_PLAN.md`、`BACKEND_PLAN.md` 与 `TASK_STATUS.md` 仅保留历史参考，不再作为新任务的派发依据。
 
 ## 1 项目结论
 
@@ -203,7 +207,7 @@ MVP 主导航只保留 4 个一级入口。
 | Diagram Editor | `/projects/:projectId/diagrams/:diagramId/edit` | 本地 draw.io 编辑器、保存状态、revision | 编辑、保存新版本、导出、返回 |
 | Connections Settings | `/settings/connections` | Runtime、数据目录、宿主连接、日志 | 安装/修复配置、复制诊断、打开目录 |
 
-详细组件、状态和页面任务见 `FRONTEND_PLAN.md`。
+页面实现细节、接口和验收统一写入对应 `docs/tasks/TASK-XXX.md`；历史 `FRONTEND_PLAN.md` 不再作为派发依据。
 
 ## 10 后端服务结构
 
@@ -243,7 +247,7 @@ MCP 进程只负责协议、工具描述、输入校验和调用 daemon。它不
 | POST | `/api/v1/connections/:host/install` | 经确认后备份并安装配置 |
 | GET/PATCH | `/api/v1/settings` | 非敏感设置读取和修改 |
 
-完整请求、响应、错误码和任务见 `BACKEND_PLAN.md`。
+完整请求、响应、错误码和 MCP Tool 合同见 `API_CONTRACT.md`；实现任务见 `docs/tasks/`。
 
 ## 11 数据库核心实体
 
@@ -270,7 +274,7 @@ MCP 进程只负责协议、工具描述、输入校验和调用 daemon。它不
 6. 列表接口必须分页；MVP 默认 50，最大 200。会议正文使用字符 offset，不使用页码猜测。
 7. 写请求支持 `Idempotency-Key`；保存 revision 还需 `baseRevisionNo`，冲突返回 409。
 8. MCP 工具返回机器可读结构和简短文本摘要；不得把 5 万字符正文附在错误消息或日志中。
-9. 先提交契约和示例，再分别实现数据库、后端和前端。契约冲突写入 `COMMUNICATION.md`。
+9. 先锁定契约和任务验收，再由同一全栈 TASK 完成页面、API、业务和数据库闭环；契约冲突写入 `COMMUNICATION.md`，不得由单个执行 Agent 私改。
 
 ## 13 Diagram DSL v0.1 契约
 
@@ -307,7 +311,7 @@ MCP 进程只负责协议、工具描述、输入校验和调用 daemon。它不
 
 ### 14.2 Diagram
 
-`validating -> rendering -> ready`。校验失败为 `validation_failed`，渲染失败为 `render_failed`。成功后创建 revision 1 并将 diagram 置为 ready。后续编辑以 ready revision 为基础创建新 revision；冲突不自动覆盖。
+Schema 与业务规则校验发生在创建 diagram 记录之前；校验失败直接返回结构化错误和 requestId，不创建 diagram。通过校验后进入 `rendering -> ready`，渲染失败进入 `render_failed`。成功后创建 revision 1 并将 diagram 置为 ready。后续编辑以 ready revision 为基础创建新 revision；冲突不自动覆盖。
 
 ### 14.3 Export
 
@@ -366,37 +370,30 @@ MCP 进程只负责协议、工具描述、输入校验和调用 daemon。它不
 
 ## 18 开发阶段与依赖
 
-| 工作包 | 任务数建议 | 前置依赖 | 可验收输出 |
-|---|---:|---|---|
-| WP0 契约与技术闸门 | 6-8 | 无 | DSL Schema、API/MCP 契约、sidecar/离线 draw.io/导出验证结论 |
-| WP1 工程骨架与存储 | 6-8 | WP0 核心结论 | Tauri 启动 daemon、迁移、项目和健康检查 |
-| WP2 会议导入与读取 | 6-8 | WP1 | 三种文件导入、5 万字、分块读取、MCP 读取 |
-| WP3 Diagram Core | 8-10 | WP0、WP1 | 校验、Graph Model、flowchart、swimlane、drawio XML |
-| WP4 编辑与版本导出 | 6-8 | WP0 编辑器闸门、WP3 | 编辑、revision、三格式导出 |
-| WP5 Agent 适配 | 5-7 | WP2、WP3 | Codex 与第二宿主安装、诊断、同工具联调 |
-| WP6 稳定性与打包 | 6-8 | WP1-WP5 | 10 份语料、异常恢复、安全检查、Windows 安装包 |
+开发改为纵向功能切片。TASK-001 先收口共享合同与工程基线，TASK-002 建立真实 Runtime 启动闭环，之后依次完成项目、会议、MCP、Diagram、编辑、导出和发布稳定性。每个 TASK 都必须在完成后立即可运行和验收，不等待“前端全部完成”或“后端全部完成”再集中联调。
 
-附件给出的 32-42 人天仅作为量级参考。排期从技术闸门通过后开始承诺；若离线编辑器或 sidecar 打包失败，需先在 `COMMUNICATION.md` 记录替代决策。
+当前依赖主线为：`TASK-001 -> TASK-002 -> TASK-003 -> TASK-004`；TASK-004 后文件导入与第一宿主 MCP 读取可以并行；Diagram 主线随后按 `TASK-007 -> TASK-008 -> TASK-009 -> TASK-010` 推进；第二宿主适配可在 MCP 基线稳定后并行；最终由 TASK-012 完成恢复、诊断、打包和 A01-A10 回归。详细依赖、修改范围和验收标准见 `TASK_BOARD.md` 与 `docs/tasks/`。
+
+附件给出的 32-42 人天仅作为量级参考。排期从对应技术闸门通过后承诺；若 SQLite sidecar、离线编辑器或布局方案失败，先在 `COMMUNICATION.md` 记录结论并更新架构，不继续堆叠依赖代码。
 
 ## 19 Git 协作规范
 
 ### 19.1 分支
 
-- 主分支：`main`，只接收已验收合并。
-- 集成分支：`dev`，承接通过任务包自测的变更。
-- 前端：`feature/frontend-模块名`。
-- 后端：`feature/backend-模块名`。
-- 数据库：`feature/database-模块名`。
-- 文档：`docs/architecture-plan`。
+- 主分支：`main`，只接收已验收版本。
+- 集成分支：已有 `dev` 时继续使用；当前仓库尚未形成稳定 dev 流程时，由项目经理指定唯一集成分支。
+- 功能任务：`feature/TASK-XXX-简短名称`。
+- 问题修复：优先继续当前 TASK 分支；需要独立修复时使用 `fix/TASK-XXX-问题`。
+- 文档：`docs/<主题>`。
 
 ### 19.2 提交与合并
 
-- 每完成一个 5-10 项任务包至少提交一次；一个提交只包含一个明确目的。
-- 提交信息示例：`docs: update architecture plan`、`feat(frontend): complete meetings import`、`feat(backend): complete diagram render api`、`feat(database): add diagram revision schema`、`test: add diagram contract tests`、`fix: resolve review issue`。
-- 执行模型完成任务后必须依次：运行测试；按验收标准自检；勾选对应 Plan；更新 Communication；提交 Git。
-- 先合并数据库迁移和 contracts，再合并后端，再合并依赖接口的前端；允许 mock UI 先行，但 mock 字段必须来自 contracts。
-- 禁止在功能分支静默修改已发布 Schema、错误码和迁移历史。冲突先记录 Communication，再由负责人与审查模型确认。
-- 合并到 `dev` 需附测试命令与结果；合并到 `main` 需完成对应工作包验收和回归。
+- 一个 TASK 可以包含多个小提交，但每个提交只解决一个明确目的；禁止前端、后端、数据库为同一功能分别抢占独立任务。
+- 提交信息示例：`feat(TASK-004): complete meeting paste flow`、`fix(TASK-007): handle invalid decision branch`、`test(TASK-009): add revision conflict coverage`、`docs(TASK-003): update acceptance result`。
+- 全栈 Agent 完成后必须运行测试、按 TASK 自检并向项目经理交付；只有项目经理实际验收通过后，TASK 才能从“待验收”进入“已完成”。
+- contracts、migration、Tauri 全局配置等公共区由 TASK_BOARD 指定唯一负责人。多个 Agent 不依赖 Git 抢占公共文件。
+- 禁止静默修改已发布 Schema、错误码和迁移历史。需要破坏性变更时先更新文档和 Communication，再修改代码。
+- 合入集成版本前必须同步最新代码并复验受影响闭环；合入 main 前完成对应阶段回归。
 
 ## 20 完成定义
 
@@ -406,9 +403,9 @@ MCP 进程只负责协议、工具描述、输入校验和调用 daemon。它不
 - 自动测试通过，相关人工路径有实际记录。
 - 数据迁移可从空库执行，也能从前一版本升级；失败可恢复。
 - 日志无会议正文、密钥和非必要本机路径。
-- Plan 验收项逐条自检完成，关联任务已勾选。
+- 当前 TASK 的验收项逐条自检完成，并由项目经理完成实际验收。
 - 接口或范围差异已写入 `COMMUNICATION.md` 并得到结论。
-- 已提交到正确分支，提交信息符合规范。
+- 已提交到正确分支，代码进入当前集成版本且项目仍可运行。
 
 ## 21 主要风险与缓解
 
