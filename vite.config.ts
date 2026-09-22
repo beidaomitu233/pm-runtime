@@ -36,7 +36,12 @@ async function readRuntimeState(): Promise<RuntimeStateFile | null> {
  *
  * 只做注入、不做代理：base URL 指向 Runtime 的真实回环端口，令牌读自 state 文件，
  * 端口与令牌都不写死，也不写入 localStorage。Runtime 未启动时不注入，页面照常显示不可用状态，
- * 不会把“服务没起来”伪装成“已连通”。桌面壳就绪后应移除本插件，避免出现两套注入来源。
+ * 不会把“服务没起来”伪装成“已连通”。
+ *
+ * 注入来源边界（COM-036 收口，TASK-002）：本插件只在 `vite dev`（apply: 'serve'）生效，
+ * 服务纯浏览器开发链路，永不进入生产构建。生产（Tauri 壳内）唯一来源是
+ * `initRuntimeConfig()` 调用的 `runtime_start` 命令；`tauri dev` 下若两者并存，
+ * 以 Tauri 注入覆盖本插件结果（见 src/api/client.ts）。
  */
 function runtimeConfigInjection(): Plugin {
   return {

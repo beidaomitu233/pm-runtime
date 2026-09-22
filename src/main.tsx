@@ -12,6 +12,7 @@ import { MeetingsPageEnhanced } from './pages/MeetingsPageEnhanced'
 import { MeetingDetailPageEnhanced } from './pages/MeetingDetailPageEnhanced'
 import { DiagramsPageEnhanced } from './pages/DiagramsPageEnhanced'
 import { DiagramDetailPageEnhanced, DiagramEditorPlaceholder } from './pages/DiagramDetailPageEnhanced'
+import { initRuntimeConfig } from './api/client'
 import './styles.css'
 
 const queryClient = new QueryClient({
@@ -30,4 +31,8 @@ function App() {
   return <QueryClientProvider client={queryClient}><BrowserRouter><RuntimeGate><Routes><Route element={<AppShell />}><Route path="/" element={<Navigate replace to="/projects" />} /><Route path="/projects" element={<ProjectsPage />} /><Route path="/projects/:projectId" element={<ProjectRouteGate />}><Route index element={<ProjectHomeRedirect />} /><Route path="meetings" element={<MeetingsPageEnhanced />} /><Route path="meetings/:meetingId" element={<MeetingDetailPageEnhanced />} /><Route path="diagrams" element={<DiagramsPageEnhanced />} /><Route path="diagrams/:diagramId" element={<DiagramDetailPageEnhanced />} /><Route path="diagrams/:diagramId/edit" element={<DiagramEditorPlaceholder />} /></Route><Route path="/settings/connections" element={<SettingsConnectionsPage />} /><Route path="/diagnostics" element={<DiagnosticsPage />} /><Route path="*" element={<Navigate replace to="/projects" />} /></Route></Routes></RuntimeGate><GlobalFeedback /></BrowserRouter></QueryClientProvider>
 }
 
-createRoot(document.getElementById('root')!).render(<StrictMode><ErrorBoundary><App /></ErrorBoundary></StrictMode>)
+// 渲染前完成生产注入（Tauri 上下文内走 runtime_start；纯浏览器开发为 no-op）。
+// 失败不阻塞渲染：RuntimeGate 会按 getConfig() 的回落展示不可用状态。
+void initRuntimeConfig().finally(() => {
+  createRoot(document.getElementById('root')!).render(<StrictMode><ErrorBoundary><App /></ErrorBoundary></StrictMode>)
+})

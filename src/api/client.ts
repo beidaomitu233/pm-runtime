@@ -29,6 +29,40 @@ declare global {
   }
 }
 
+/**
+ * 当前是否运行在 Tauri 桌面壳内（Tauri 2 注入 `__TAURI_INTERNALS__`）。
+ *
+ * 注入来源边界（COM-036 收口）：
+ * - 生产（Tauri 打包构建）：只有本函数这一条来源——`runtime_start` 命令返回 baseUrl/sessionToken。
+ * - 开发期浏览器（`vite dev`，无壳）：仅由 vite `transformIndexHtml` 插件读
+ *   `.pm-runtime/runtime-state.json` 注入（插件 `apply: 'serve'`，不进生产构建）。
+ * - 开发期 `tauri dev`：两者都存在，Tauri 上下文内以后者为准并覆盖开发期注入，避免双来源漂移。
+ */
+export function isTauriContext(): boolean {
+  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+}
+
+/**
+ * 桌面壳就绪后的唯一生产注入入口。必须在渲染前 await 完成。
+ * 非 Tauri 上下文（纯浏览器开发）直接返回，沿用开发期注入；
+ * invoke 失败不抛出——`getConfig()` 保持回落，RuntimeGate 正常显示不可用状态。
+ */
+export async function initRuntimeConfig(timeoutMs = 10_000): Promise<void> {
+  if (!isTauriContext()) return
+  try {
+    const { invoke } = await import('@tauri-apps/api/core')
+    const config = await Promise.race([
+      invoke<{ baseUrl: string; sessionToken?: string }>('runtime_start'),
+      new Promise<never>((_, reject) => window.setTimeout(() => reject(new Error('runtime_start timeout')), timeoutMs)),
+    ])
+    if (config && typeof config.baseUrl === 'string' && config.baseUrl.length > 0) {
+      window.__PM_RUNTIME_CONFIG__ = config
+    }
+  } catch (error) {
+    console.warn('[pm-runtime] Tauri runtime_start 失败，RuntimeGate 将显示不可用状态。', error)
+  }
+}
+
 type RuntimeErrorBody = {
   code: string
   message: string

@@ -1,0 +1,6 @@
+{
+  "identifier": "default",
+  "description": "Default capability for the PM Runtime main window: core APIs only; sidecar lifecycle goes through the app's runtime_start/runtime_stop commands.",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}

@@ -1,0 +1,26 @@
+[package]
+name = "pm-runtime"
+version = "0.1.0"
+description = "PM Runtime desktop shell (Tauri 2)"
+edition = "2021"
+rust-version = "1.77"
+
+# Tauri 2 模板约定：bin 由 src/main.rs 构建，lib 承载 run() 供重用/测试。
+[lib]
+name = "pm_runtime"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true
+panic = "abort"

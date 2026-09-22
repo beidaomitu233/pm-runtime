@@ -6,3 +6,6 @@ coverage/
 !.env.example
 .workbuddy/
 .pm-runtime/
+target/
+src-tauri/target/
+src-tauri/gen/

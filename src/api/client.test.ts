@@ -1,10 +1,57 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { apiClient, RuntimeApiError, RuntimeResponseError } from './client'
+import { apiClient, initRuntimeConfig, isTauriContext, RuntimeApiError, RuntimeResponseError } from './client'
+
+vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }))
+
+describe('initRuntimeConfig', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks()
+    vi.clearAllMocks()
+    delete window.__PM_RUNTIME_CONFIG__
+    delete (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__
+  })
+
+  it('is a no-op outside the Tauri shell and keeps the browser dev injection', async () => {
+    window.__PM_RUNTIME_CONFIG__ = { baseUrl: 'http://127.0.0.1:4310/api/v1', sessionToken: 'dev-injected' }
+    expect(isTauriContext()).toBe(false)
+    await initRuntimeConfig()
+    expect(window.__PM_RUNTIME_CONFIG__).toEqual({ baseUrl: 'http://127.0.0.1:4310/api/v1', sessionToken: 'dev-injected' })
+    const { invoke } = await import('@tauri-apps/api/core')
+    expect(invoke).not.toHaveBeenCalled()
+  })
+
+  it('takes the Tauri runtime_start result as the production injection source', async () => {
+    ;(window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ = {}
+    const { invoke } = await import('@tauri-apps/api/core')
+    vi.mocked(invoke).mockResolvedValue({ baseUrl: 'http://127.0.0.1:45123/api/v1', sessionToken: 'tauri-token' })
+    expect(isTauriContext()).toBe(true)
+    await initRuntimeConfig()
+    expect(invoke).toHaveBeenCalledWith('runtime_start')
+    expect(window.__PM_RUNTIME_CONFIG__).toEqual({ baseUrl: 'http://127.0.0.1:45123/api/v1', sessionToken: 'tauri-token' })
+  })
+
+  it('swallows runtime_start failures so RuntimeGate can render the unavailable state', async () => {
+    ;(window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ = {}
+    const { invoke } = await import('@tauri-apps/api/core')
+    vi.mocked(invoke).mockRejectedValue(new Error('sidecar missing'))
+    await expect(initRuntimeConfig()).resolves.toBeUndefined()
+    expect(window.__PM_RUNTIME_CONFIG__).toBeUndefined()
+  })
+
+  it('ignores an empty baseUrl from a malformed invoke result', async () => {
+    ;(window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ = {}
+    const { invoke } = await import('@tauri-apps/api/core')
+    vi.mocked(invoke).mockResolvedValue({ baseUrl: '' })
+    await initRuntimeConfig()
+    expect(window.__PM_RUNTIME_CONFIG__).toBeUndefined()
+  })
+})
 
 describe('apiClient', () => {
   beforeEach(() => {
     vi.restoreAllMocks()
     window.__PM_RUNTIME_CONFIG__ = { baseUrl: 'http://127.0.0.1:4310/api/v1', sessionToken: 'test-session' }
+    delete (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__
   })
 
   it('adds request and session headers and validates health data', async () => {
