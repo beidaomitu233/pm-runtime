@@ -74,6 +74,9 @@ importers:
       '@pm/contracts':
         specifier: workspace:*
         version: link:../contracts
+      ajv:
+        specifier: ^8.17.1
+        version: 8.20.0
       dagre:
         specifier: 0.8.5
         version: 0.8.5

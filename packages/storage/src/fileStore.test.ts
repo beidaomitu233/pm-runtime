@@ -105,17 +105,29 @@ describe("file store", () => {
     }
   });
 
-  it("refuses to read through a linked file", () => {
+  it("refuses to read through a linked file", (ctx) => {
     const outside = mkdtempSync(join(tmpdir(), "pm-outside-file-"));
     const outsideFile = join(outside, "secret.txt");
     writeFileSync(outsideFile, "secret");
     mkdirSync(store.root, { recursive: true });
-    symlinkSync(outsideFile, join(store.root, "linked.txt"), "file");
+    const linkPath = join(store.root, "linked.txt");
+    try {
+      symlinkSync(outsideFile, linkPath, "file");
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code;
+      if (code === "EPERM" || code === "EACCES" || code === "ENOSYS") {
+        rmSync(outside, { recursive: true, force: true });
+        ctx.skip(`host cannot create file symlinks (${code}); enable Developer Mode or run elevated`);
+        return;
+      }
+      rmSync(outside, { recursive: true, force: true });
+      throw error;
+    }
 
     try {
       expect(() => store.read("linked.txt")).toThrow(FileStoreError);
     } finally {
-      rmSync(join(store.root, "linked.txt"), { force: true });
+      rmSync(linkPath, { force: true });
       rmSync(outside, { recursive: true, force: true });
     }
   });
