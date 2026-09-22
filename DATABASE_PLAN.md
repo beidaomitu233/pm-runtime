@@ -145,7 +145,7 @@ FTS5 不列入 v0.1 必须表。后续确认 keyword 检索时以新迁移增加
 | `diagram_type` | TEXT | 是 | 无 | `flowchart`、`swimlane` |
 | `title` | TEXT | 是 | 无 | 1-120 字符 |
 | `orientation` | TEXT | 是 | 无 | `horizontal`、`vertical` |
-| `status` | TEXT | 是 | `validating` | `validating`、`rendering`、`ready`、`validation_failed`、`render_failed` |
+| `status` | TEXT | 是 | `rendering` | `rendering`、`ready`、`render_failed` |
 | `current_revision_no` | INTEGER | 是 | 0 | `>=0`；ready 时 `>=1` |
 | `last_error_code` | TEXT | 否 | NULL | 最近生成错误码 |
 | `last_error_message` | TEXT | 否 | NULL | 去敏文案 |
@@ -300,7 +300,7 @@ FTS5 不列入 v0.1 必须表。后续确认 keyword 检索时以新迁移增加
 | 表.字段 | 枚举 | 允许流转 |
 |---|---|---|
 | meetings.import_status | importing、ready、failed | importing -> ready/failed |
-| diagrams.status | validating、rendering、ready、validation_failed、render_failed | validating -> rendering/validation_failed；rendering -> ready/render_failed |
+| diagrams.status | rendering、ready、render_failed | rendering -> ready/render_failed；Schema/业务校验失败发生在 diagram 创建前 |
 | diagram_revisions.source | agent_render、editor_save、history_fork | 不流转，不可变 |
 | diagram_revisions.dsl_status | current、stale、none | Agent 渲染通常为 current；未同步 DSL 的人工编辑为 stale；确无 DSL 为 none |
 | revision_artifacts.format | drawio、svg、png | 不流转，artifact 追加写 |
@@ -340,7 +340,9 @@ FTS5 不列入 v0.1 必须表。后续确认 keyword 检索时以新迁移增加
 - 测试至少覆盖：空库建立、从每个已发布版本逐级升级、失败回滚、重复运行、checksum 被改写、磁盘满。
 - v0.1 不提供自动降级 migration。回滚应用前必须确认数据库兼容或恢复备份。
 
-## 10 数据库任务包
+## 10 历史数据库任务映射（停止独立派单）
+
+> 2026-09-22 起数据库工作合并进 `TASK_BOARD.md` 与 `docs/tasks/` 的全栈纵向 TASK。本节 DB-001～DB-018 仅用于追溯早期设计细节，不再作为数据库 Agent 的独立派单清单；其中原 DB-013 已由架构决策确定采用 `revision_artifacts`。
 
 ### DP1 基础与迁移 6 项
 
@@ -462,14 +464,10 @@ FTS5 不列入 v0.1 必须表。后续确认 keyword 检索时以新迁移增加
   验收标准：敏感 key 无法保存；重复写返回原结果。
   测试要求：白名单、冲突、TTL 清理。
 
-- [ ] 任务编号：DB-013
-  模块：导出元数据决策
-  目标：确定 SVG/PNG 路径是否更新 revision，或新增 `revision_artifacts` 表。
-  使用位置：Export service。
-  输入：Q-DB-003 结论；输出 migration/ADR。
-  异常：不可变 revision 与延迟导出冲突。
-  验收标准：选择后接口、Schema 和清理策略一致；不得一半写列一半写新表。
-  测试要求：重复导出、失败重试、缓存命中。
+- [x] 任务编号：DB-013（历史编号，架构已决策）
+  模块：导出元数据
+  结论：采用独立 `revision_artifacts` 表，延迟导出不 UPDATE `diagram_revisions`；实际实现与验收并入 TASK-010。
+  测试要求：重复导出、失败重试、缓存命中，以及导出前后 revision 行不变。
 
 ### DP3 质量恢复与发布 5 项
 
