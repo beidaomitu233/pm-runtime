@@ -1,6 +1,7 @@
 # TASK-001 工程基线与共享合同收口
 
-状态：待验收  
+状态：已完成（2026-09-22 项目经理验收通过）  
+验收结果：`pnpm check` exit 0（前端 6 文件 16 用例 + 后端 21 文件 132 通过/1 环境跳过）；`pnpm build` exit 0（291 模块）；`pnpm install --frozen-lockfile` exit 0；`src/types/*` 三份重复合同删除且全库无残留引用；前端经 `@pm/contracts` 消费；`resources.test.ts` 覆盖畸形 Health/Project/legacy 字段拒绝。证据提交：`2bcd8b2`、`cc29fe4`、`bbd190f`（分支 `TASK-001`）。遗留 COM-051（sidecar `starting` 分支）转 TASK-002 处理。  
 依赖：无  
 业务目标：把当前已经存在的 React 基础代码与 backend workspace 收口成一个可以持续开发的工程基线，并消除前后端合同重复，为后续所有纵向 TASK 提供唯一接口类型与运行时 Schema 来源。
 
