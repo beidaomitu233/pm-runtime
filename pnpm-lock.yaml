@@ -87,6 +87,9 @@ importers:
 
   packages/storage:
     dependencies:
+      '@pm/contracts':
+        specifier: workspace:*
+        version: link:../contracts
       better-sqlite3:
         specifier: 11.10.0
         version: 11.10.0
