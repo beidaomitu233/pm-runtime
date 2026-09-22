@@ -3,6 +3,8 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
+import { parseHealthResponse } from "@pm/contracts";
+
 import { RuntimeLifecycle } from "./lifecycle.js";
 import { RuntimeHttpServer } from "./httpBaseline.js";
 
@@ -142,5 +144,26 @@ describe("RuntimeHttpServer", () => {
       error: { code: "INVALID_ARGUMENT", message: "Route not found" },
       requestId: missing.headers["x-request-id"]
     });
+  });
+
+  it("keeps health status inside the contract four-state enum and never returns starting (COM-051)", async () => {
+    const lifecycle = new RuntimeLifecycle({
+      statePath: join(directory, "runtime-state.json"),
+      pid: 42004,
+      isProcessAlive: () => false
+    });
+    server = new RuntimeHttpServer({ lifecycle });
+
+    const beforeStart = await server.inject({ method: "GET", url: "/api/v1/health" });
+    expect(beforeStart.statusCode).toBe(200);
+    expect(beforeStart.json().data.status).toBe("unavailable");
+    expect(() => parseHealthResponse(beforeStart.json().data)).not.toThrow();
+
+    await server.start();
+    const running = await server.inject({ method: "GET", url: "/api/v1/health" });
+    expect(running.statusCode).toBe(200);
+    expect(running.json().data.status).toBe("ready");
+    expect(() => parseHealthResponse(running.json().data)).not.toThrow();
+    expect(JSON.stringify(running.json())).not.toContain("starting");
   });
 });

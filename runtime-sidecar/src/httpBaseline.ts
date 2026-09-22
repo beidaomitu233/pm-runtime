@@ -207,7 +207,10 @@ export class RuntimeHttpServer {
         appVersion: this.appVersion,
         sidecarVersion: this.sidecarVersion,
         schemaVersion: "0.1",
-        status: this.endpoint ? "ready" : "starting",
+        // 合同四态（API_CONTRACT §3）内取值，绝不返回 starting。
+        // 能被请求到时 listen 必已完成、endpoint 必已赋值，恒为 ready；
+        // endpoint 为空只可能出现在未 start 的 inject 测试路径，语义为 unavailable。见 COM-051。
+        status: this.endpoint ? "ready" : "unavailable",
         dataDirMasked: "[local-data]"
       } as const;
       return { data, requestId } satisfies SuccessEnvelope<typeof data>;

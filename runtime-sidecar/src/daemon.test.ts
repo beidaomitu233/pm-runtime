@@ -68,6 +68,19 @@ describe("RuntimeDaemon", () => {
     expect(allowed.headers.get("access-control-allow-origin")).toBe("http://127.0.0.1:1420");
   });
 
+  it("treats a repeated start as idempotent and keeps serving health", async () => {
+    daemon = new RuntimeDaemon({ dataDir: directory });
+    const first = await daemon.start();
+    const second = await daemon.start();
+    expect(second.port).toBe(first.port);
+    expect(second.sessionToken).toBe(first.sessionToken);
+
+    const response = await fetch(`http://${first.host}:${first.port}/api/v1/health`);
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as { data: { status: string } };
+    expect(body.data.status).toBe("ready");
+  });
+
   it("stops listening and removes the state file on shutdown", async () => {
     daemon = new RuntimeDaemon({ dataDir: directory });
     const endpoint = await daemon.start();
