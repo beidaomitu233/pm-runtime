@@ -311,7 +311,7 @@ MCP 进程只负责协议、工具描述、输入校验和调用 daemon。它不
 
 ### 14.2 Diagram
 
-`validating -> rendering -> ready`。校验失败为 `validation_failed`，渲染失败为 `render_failed`。成功后创建 revision 1 并将 diagram 置为 ready。后续编辑以 ready revision 为基础创建新 revision；冲突不自动覆盖。
+Schema 与业务规则校验发生在创建 diagram 记录之前；校验失败直接返回结构化错误和 requestId，不创建 diagram。通过校验后进入 `rendering -> ready`，渲染失败进入 `render_failed`。成功后创建 revision 1 并将 diagram 置为 ready。后续编辑以 ready revision 为基础创建新 revision；冲突不自动覆盖。
 
 ### 14.3 Export
 
