@@ -24,7 +24,7 @@
 | BE-006 | 后端执行模型/backend-local | `packages/storage`：SQLite 驱动选型技术闸门（事务、WAL、备份、Windows 自包含打包） | 阻塞 | 2026-09-21 | **合并阻塞已解除**：成果 `89e4605` 已合入 `dev`（`docs/decisions/BE-006-sqlite-driver.md`、`src/sqliteGate.ts`、`src/sqliteGate.test.ts`）。剩余阻塞属验收项本身：当前环境没有干净 Windows VM，sidecar externalBin 自包含打包与无 Node 启动尚未验证，故不勾选完成 |
 | BE-007 | 后端执行模型/backend-local | `packages/storage`：Migration runner（版本、checksum、事务、启动校验） | 完成 | 2026-09-22 | 无。`migrationRunner.ts` + 13 个用例通过；checksum 改写、版本倒退、失败回滚、重复运行、CRLF 归一均有实测。剩余边界见 `docs/decisions/BE-007-migration-runner.md`：磁盘满未做注入、迁移文件的打包分发待定（COM-038） |
 | BE-008 | 后端执行模型/backend-local | `packages/storage`：受控相对路径、临时文件、原子移动、SHA-256、孤儿清理 | 完成 | 2026-09-22 | 无。`fileStore.ts` + 14 个用例通过；路径穿越、junction 逃逸、rename 失败无残留、孤儿清理只扫 `.tmp` 均有实测。剩余边界见 `docs/decisions/BE-008-file-store.md`：磁盘满与并发写未做注入、目录 fsync 在 Windows 不可用 |
-| BE-009～BE-015 | 未领取 | 项目与会议：Project service、TXT/MD/DOCX 解析、导入落盘、列表/详情/分块正文与性能隐私 | 未领取 | 2026-09-21 | 依赖 BE-007/BE-008；该链路直接决定 FE-012～FE-017 能否真实联调 |
+| BE-009～BE-015 | 集成执行模型/fullstack | 项目与会议：Project service、TXT/MD/DOCX 解析、导入落盘、列表/详情/分块正文与性能隐私 | 进行中 | 2026-09-22 | 2026-09-22 领取。BE-007/BE-008 与 DP1 已完成，前置已解除；BE-011 DOCX 依赖可安装的 OOXML 解析库，若安装失败单独阻塞，不拖累其余流程 |
 | BE-016 | 后端执行模型/backend-local | `packages/diagram-core`：Ajv Diagram DSL Schema validator、错误路径和错误数量上限 | 完成 | 2026-09-21 | 无。已合并到 `dev` |
 | BE-017 | 后端执行模型/backend-local | `packages/diagram-core`：Diagram DSL 业务规则校验、引用/泳道/可达性/decision/self-loop/重复边 | 完成 | 2026-09-21 | 无。已合并到 `dev` |
 | BE-018 | 后端执行模型/backend-local | `packages/diagram-core`：SourceRefs meeting/node/offset/quote 校验与规范化输出 | 完成 | 2026-09-21 | 无。已合并到 `dev` |
@@ -34,10 +34,12 @@
 | FE-001～FE-011 | 前端执行模型/local-foundation | package.json、Vite/TypeScript 配置、src/app、src/api、src/pages、src/state、基础测试 | 进行中 | 2026-09-21 | 原阻塞「依赖安装和自动检查尚未完成」已解除：前端 typecheck、6 个测试文件 14 个用例、`vite build` 均实际通过。逐项验收证据（健康检查四场景、404 路由、axe、1024x720 布局）尚未逐项核对，故不勾选完成 |
 | FE-012/013/015/016 | 前端执行模型/meetings | Meetings 列表、粘贴导入、详情分块查看、meeting ID 与 Agent 引导 | 进行中 | 2026-09-21 | 会议 API（BE-009～BE-015）未实现，页面只能对着局部 typed client 验证；取得真实接口前不得标记联调通过 |
 | FE-014 | 前端执行模型/meetings | 通过 Tauri 文件选择器导入 TXT、MD、DOCX | 阻塞 | 2026-09-21 | 仓库尚无 `src-tauri` 与 Tauri capability，受控 file handle 不可用；不伪造浏览器路径 |
+| FE-017 | 集成执行模型/fullstack | 会议导入回归：真实链路组件边界与 Playwright 桌面 E2E | 进行中 | 2026-09-22 | 2026-09-22 领取（原表缺行）。依赖本批 BE-009～BE-015 联调；DOCX 的 UI 导入路径仍受 FE-014/Tauri 缺失阻塞，先以 API 层覆盖并记录缺口 |
 | FE-018/019 | 前端执行模型/diagrams | 图形列表、类型/状态筛选、详情、warning、来源与 revision 历史 | 进行中 | 2026-09-21 | Diagram API 与 `@pm/contracts` 的 diagrams DTO/Schema 尚未实现；见 COM-021 |
 | FE-020～FE-032 | 未领取 | 编辑器技术闸门、DrawioBridge、revision 保存、版本历史、导出、连接设置、诊断、CSP、无障碍与 E2E | 未领取 | 2026-09-21 | FE-020 编辑器闸门未通过前不得启动 FE-021～FE-025 |
 | DB-001～DB-006 | 后端执行模型/backend-local | 迁移框架、运行参数、初始 Schema、文件路径契约、Repository 基类、备份恢复 | 完成 | 2026-09-22 | 无。DP1 六项全部完成并各有实测用例；未覆盖的边界（断电、映射网络盘、磁盘满、并发翻页）逐项记在对应 ADR，不以"基本完成"收尾 |
-| DB-007～DB-018 | 后端执行模型/backend-local | 各领域表 repository、导出元数据决策、查询计划、完整性审计、崩溃恢复、迁移回归与发布验收 | 未领取 | 2026-09-22 | 前置 DP1 已完成，可开工；DB-013 需先定 Q-DB-003（延迟导出是否新增 `revision_artifacts`） |
+| DB-007/DB-008 | 集成执行模型/fullstack | Projects repository、Meetings repository（CRUD、状态流转、游标列表、索引计划） | 进行中 | 2026-09-22 | 2026-09-22 随 BE-009～BE-015 一并领取：这两张表是项目与会议链路的地基，与 service 同批联调避免跨执行流拆分同一事务边界 |
+| DB-009～DB-018 | 后端执行模型/backend-local | Diagrams/Revision/Source refs/辅助表 repository、导出元数据决策、查询计划、完整性审计、崩溃恢复、迁移回归与发布验收 | 未领取 | 2026-09-22 | 前置 DP1 已完成，可开工；DB-013 需先定 Q-DB-003（延迟导出是否新增 `revision_artifacts`）；DB-007/DB-008 已由 fullstack 领取 |
 
 ## 2 阻塞汇总
 
