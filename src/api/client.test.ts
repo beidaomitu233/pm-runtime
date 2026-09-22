@@ -25,4 +25,29 @@ describe('apiClient', () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ data: { status: 'ready' }, requestId: 'req-2' }), { status: 200 }))
     await expect(apiClient.getHealth()).rejects.toBeInstanceOf(RuntimeResponseError)
   })
+
+  it('accepts a well-formed project list payload', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({
+      data: {
+        items: [{ id: '01J00000000000000000000000', name: '客户平台', description: null, createdAt: '2026-09-21T00:00:00.000Z', updatedAt: '2026-09-21T00:00:00.000Z' }],
+        nextCursor: null,
+      },
+      requestId: '01J8Z7QK2N4G6H8J9K0M1N2P3Q',
+    }), { status: 200 }))
+    await expect(apiClient.listProjects()).resolves.toMatchObject({
+      items: [{ name: '客户平台', description: null }],
+      nextCursor: null,
+    })
+  })
+
+  it('rejects malformed project payloads through the shared contract', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({
+      data: {
+        items: [{ id: '01J00000000000000000000000', name: '客户平台', createdAt: '2026-09-21T00:00:00.000Z', updatedAt: '2026-09-21T00:00:00.000Z' }],
+        nextCursor: null,
+      },
+      requestId: 'req-projects',
+    }), { status: 200 }))
+    await expect(apiClient.listProjects()).rejects.toBeInstanceOf(RuntimeResponseError)
+  })
 })

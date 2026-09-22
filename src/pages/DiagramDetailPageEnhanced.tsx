@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
+import type { DiagramStatus } from '@pm/contracts'
 import { apiClient, RuntimeApiError } from '../api/client'
 import { PageError } from '../app/AppShell'
-import type { DiagramStatus } from '../types/diagramContracts'
 import './diagrams.css'
 
 export function DiagramDetailPageEnhanced() {
@@ -19,6 +19,6 @@ export function DiagramEditorPlaceholder() {
   return <section className="diagram-page"><div className="placeholder-card"><p className="eyebrow">编辑器技术闸门</p><h1>本地编辑器尚未接入</h1><p>FE-020 需要先验证离线 diagrams.net 资源、CSP、postMessage 和许可证；当前不会创建空 revision。</p><Link className="button" to={`/projects/${useParams().projectId}/diagrams`}>返回图形列表</Link></div></section>
 }
 
-function diagramStatusLabel(status: DiagramStatus) { return status === 'ready' ? '可编辑' : status === 'validation_failed' ? '校验失败' : status === 'render_failed' ? '生成失败' : status === 'rendering' ? '生成中' : '校验中' }
+function diagramStatusLabel(status: DiagramStatus) { return status === 'ready' ? '可编辑' : status === 'render_failed' ? '生成失败' : '生成中' }
 function formatDate(value: string) { const date = new Date(value); return Number.isNaN(date.valueOf()) ? '未知' : new Intl.DateTimeFormat('zh-CN', { dateStyle: 'medium', timeStyle: 'short' }).format(date) }
 

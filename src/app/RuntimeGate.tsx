@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
+import { API_SCHEMA_VERSION } from '@pm/contracts'
 import { apiClient, isRetryableRuntimeError, RuntimeApiError, RuntimeResponseError } from '../api/client'
-import { EXPECTED_SCHEMA_VERSION } from '../types/contracts'
 
 interface Props { children: React.ReactNode }
 
@@ -22,7 +22,7 @@ export function RuntimeGate({ children }: Props) {
     return <RuntimeUnavailable requestId={requestId} onRetry={() => void health.refetch()} />
   }
 
-  if (health.data.schemaVersion !== EXPECTED_SCHEMA_VERSION || health.data.status === 'incompatible') {
+  if (health.data.schemaVersion !== API_SCHEMA_VERSION || health.data.status === 'incompatible') {
     return <RuntimeIncompatible actualVersion={health.data.schemaVersion} requestId={undefined} />
   }
 
@@ -38,5 +38,5 @@ function RuntimeUnavailable({ requestId, onRetry }: { requestId?: string; onRetr
 }
 
 function RuntimeIncompatible({ actualVersion, requestId }: { actualVersion: string; requestId?: string }) {
-  return <main className="center-page"><section className="status-card" role="alert"><p className="eyebrow">版本不兼容</p><h1>Runtime 版本需要更新</h1><p>当前 Runtime schema 为 {actualVersion}，前端需要 {EXPECTED_SCHEMA_VERSION}。业务页面已暂停，避免误读数据。</p>{requestId && <p className="request-id">requestId：{requestId}</p>}</section></main>
+  return <main className="center-page"><section className="status-card" role="alert"><p className="eyebrow">版本不兼容</p><h1>Runtime 版本需要更新</h1><p>当前 Runtime schema 为 {actualVersion}，前端需要 {API_SCHEMA_VERSION}。业务页面已暂停，避免误读数据。</p>{requestId && <p className="request-id">requestId：{requestId}</p>}</section></main>
 }
