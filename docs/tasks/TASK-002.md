@@ -11,3 +11,17 @@
 允许修改 `src-tauri/`、`runtime-sidecar` 生命周期/HTTP 基础、`packages/storage` 基础、health contracts、RuntimeGate 连接注入和相关测试。Tauri 全局配置、Fastify 全局 middleware、migration runner 属于公共冲突区。
 
 验收入口：启动 Desktop 后看到“Runtime 已连接”；停止/破坏 sidecar 后显示明确不可用状态和 requestId，不误显示空业务数据；schemaVersion 不兼容时阻止进入业务页面；第二个 daemon 实例不能成为第二数据库写入者。自动测试覆盖合法/错误 token、畸形请求、旧 runtime-state、重复启动、migration 重复执行与失败回滚。技术闸门至少提供一次 Windows 自包含 sidecar 冒烟证据；若当前开发环境无法完成干净 Windows 验证，任务状态只能进入“待验收/阻塞”，不得虚报最终通过。
+
+## 当前已有成果（2026-09-22 基线对齐，COM-048）
+
+以下内容已在 `dev` 存在，复用不重做：
+
+- `runtime-sidecar`：`lifecycle.ts`（单实例/端口/令牌/优雅关闭）、`httpBaseline.ts`（Fastify、`GET /api/v1/health`、`X-PM-Session` 鉴权、requestId、body limit、统一错误 envelope、精确 CORS 含 `X-Request-Id`）、`daemon.ts`/`devMain.ts` 可运行入口（`pnpm runtime:dev`）（BE-004/005、COM-029/030/036）。
+- `packages/storage`：migration runner（含 `schema_migrations` 唯一 DDL，COM-039）、runtime DB/参数（DB-002，WAL/外键/busy_timeout）、file store、backup（COM-043）、ULID factory（DB-005）、`0001_initial.sql` 全业务表、SQLite 驱动闸门（BE-006 ADR）。
+- 前端 RuntimeGate + 开发期注入 `window.__PM_RUNTIME_CONFIG__`（vite `transformIndexHtml` 读 `.pm-runtime/runtime-state.json`），浏览器链路已通（B-6 已解）。
+
+仍需完成（本任务验收缺口）：
+
+- **完全没有 `src-tauri/`**（集成报告 B-4）：Tauri 2 窗口、最小 capability、sidecar 生命周期托管、生产环境 baseUrl/sessionToken 注入（替换或并存开发期注入）。
+- Windows 自包含 sidecar 打包闸门：BE-006 ADR 标注“部分验证，Windows 干净机打包待验证”，未过前任务不得标已完成。
+- 与 TASK-001 收口后的 health contracts 对齐复验。

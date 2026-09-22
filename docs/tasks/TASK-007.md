@@ -12,3 +12,19 @@
 Desktop 完成 Diagrams 列表与最小 Detail，可以从生成结果直接定位到 diagram/revision，并下载或打开原始 drawio 源。此任务只要求 flowchart；泳道与来源追溯由 TASK-008 扩展。
 
 验收至少使用 3 个脱敏/合成会议样例：顺序流程、decision 两分支、包含回退边的流程。正常 DSL 生成可由目标 draw.io 打开的 XML；默认布局无节点重叠；相同 DSL、相同 layout 配置和 renderer 版本产生相同规范 XML hash。缺字段、孤立 task、无 start/end、decision 单分支/重复标签、自环等非法 DSL 返回带 JSON Pointer/规则定位的错误，且列表中无 ready diagram。完成后项目经理应能从宿主调用 render，并立即在 Desktop 看到结果。
+
+## 当前已有成果（2026-09-22 基线对齐，COM-048）
+
+以下内容已在 `dev` 存在，复用不重做：
+
+- `packages/contracts`：Diagram DSL JSON Schema、类型、fixtures、运行时校验（BE-002/003）。
+- `packages/diagram-core`：schemaValidator、businessValidator（含 decision 分支/重复边 warning 等规则，BE-016/017，ADR `BE-017-diagram-rules.md`）、graphModel、sourceRefsValidator（BE-018）、layoutGate（BE-020 ADR：elkjs 主选/dagre 回退，30 节点无重叠自动化已过）。
+- `diagrams`、`diagram_revisions`、`diagram_source_refs` 表及索引（0001_initial.sql）。
+- 前端 `DiagramsPageEnhanced`、`DiagramDetailPageEnhanced` 页面骨架（FE-018/019）。
+
+仍需完成（本任务验收缺口）：
+
+- 生产布局实现（layoutGate 仅闸门对比，ADR 明确 BE-021/022 才是生产布局）与 draw.io XML 确定性 adapter。
+- `POST /projects/:id/diagrams`、diagram list/detail API、revision 1 落盘（DSL/drawio/hash）、状态机 `rendering -> ready | render_failed`。
+- MCP `pm.diagram.render`、`pm.diagram.get`。
+- 泳道视觉评审（BE-020/COM-023 未完成项）由 TASK-008 承接，本任务只保证 flowchart 金样。

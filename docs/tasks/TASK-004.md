@@ -14,3 +14,17 @@
 允许修改 meetings UI/API/service/repository、文件存储、meetings migration/contracts；不包含 TXT/MD/DOCX 文件解析和 MCP。
 
 验收：粘贴不少于 5 万中文字符后 UI 不冻结，保存成功可复制 meeting ID；从 offset=0 连续读取到 hasMore=false 后拼接文本与规范文本完全一致；刷新和重启后会议仍可读取。空正文、超限、DB 提交失败、磁盘写入失败、正文文件缺失、非法 offset 都要有明确错误并保持数据一致。
+
+## 当前已有成果（2026-09-22 基线对齐，COM-048）
+
+以下内容已在 `dev` 存在，复用不重做：
+
+- `meetings` 表及 `idx_meetings_project_*`、`idx_meetings_text_hash` 已在 `0001_initial.sql`。
+- 前端 `MeetingsPageEnhanced`、`MeetingDetailPageEnhanced` 列表/详情骨架与测试（FE-012/013/015/016），粘贴对话框 UI 基础。
+- `packages/storage` file store（临时写、hash、原子移动）可作为文件事务底座（BE-008）。
+
+仍需完成（本任务验收缺口，集成报告 B-3 的一部分）：
+
+- meeting service、`POST /projects/:id/meetings` 粘贴导入、`GET /meetings/:id`、`GET /meetings/:id/content` 分块读取业务路由全部缺失。
+- 导入状态机 `importing -> ready | failed`、5 万字规范化+SHA-256、字符 offset 分块（默认 8000/最大 20000，多字节边界）。
+- 失败不产生 ready meeting、日志不含正文等安全验收项。

@@ -1,6 +1,6 @@
 # PM Runtime v0.1 全栈任务板
 
-版本：2026-09-22 架构收口稿  
+版本：2026-09-22 架构收口稿（2026-09-22 基线对齐 `dev` 实际代码）  
 派发依据：`PROJECT_DOCUMENT.md`、`ARCHITECTURE.md`、`DATABASE_PLAN.md`、`API_CONTRACT.md`
 
 本表从 2026-09-22 起作为开发项目经理的任务调度入口。历史 `FRONTEND_PLAN.md`、`BACKEND_PLAN.md`、`TASK_STATUS.md` 仅保留追溯价值，不再直接派发 FE/BE/DB 独立任务。
@@ -22,6 +22,19 @@
 | TASK-011 | 第二宿主与连接管理 | 006、007 | agent-adapters、Connections UI | 宿主配置 patch、MCP schema | 待开发 | 两个宿主读取同一 meeting 并调用相同渲染工具 |
 | TASK-012 | 恢复、诊断、Windows 打包与发布验收 | 003-011 | recovery、diagnostics、package、fixtures、E2E | 全局构建/发布配置 | 待开发 | Windows 无 Node 环境完成 A01-A10 全量回归 |
 
-当前已有代码应吸收到新任务中，不重复实现：提交 `7eb06e2` 的 FE-001～006 前端基础主要归入 TASK-001/TASK-002；提交 `0157da3`、`b70e2b6` 的 BE-001 workspace 骨架归入 TASK-001。它们只能作为已有实现证据，不能直接视为新的纵向 TASK 已完成。
+## 当前基线吸收范围（2026-09-22 对齐 `dev` 实际代码，COM-048）
+
+以下成果已在 `dev` 中存在，属于对应 TASK 的已有实现证据，Agent 必须复用而非重复实现；但均不等于该纵向 TASK 已完成，缺口见"仍需完成"。
+
+| TASK | 已在 dev 中存在 | 仍需完成（本任务核心缺口） |
+|---|---|---|
+| TASK-001 | `@pm/contracts` 全套（schemas/types/validation/diagram*/fixtures+测试，COM-019/042）；pnpm workspace、`pnpm-lock.yaml`、`check` 脚本（COM-026） | 前端仍存在第二套合同 `src/types/contracts.ts`、`meetingContracts.ts`、`diagramContracts.ts`（COM-046）；需全部迁移为从 `@pm/contracts` 消费或兼容再导出，干净 checkout 全量验证 |
+| TASK-002 | daemon/lifecycle/HTTP 基线+session token+统一 envelope（BE-004/005、COM-029/030/036）；migration runner、runtime DB、file store、backup、SQLite 闸门（BE-006/007/008、DB-002/005/006，ADR 见 `docs/decisions/`）；健康检查与浏览器开发期注入已通（B-6 已解） | 完全没有 `src-tauri/`（B-4）；Tauri capability、sidecar 生命周期接入、Tauri 注入替换开发期注入；Windows 自包含 sidecar 打包闸门未过（BE-006 ADR 标部分验证/阻塞） |
+| TASK-003 | `projects` 表+两个索引（0001_initial.sql）、repository base+ULID（DB-005）、ProjectsPageEnhanced 前端页 | `GET/POST/PATCH /api/v1/projects` 业务路由与 project service 全缺（B-3）；Idempotency-Key、cursor 分页接入、重启持久化真实验证 |
+| TASK-004 | `meetings` 表+索引（0001_initial.sql）、Meetings/MeetingDetail Enhanced 前端页、file store 基础 | meeting service、粘贴导入 API、临时文件→hash→事务→原子落盘链路、`GET /meetings/:id/content` 分块读取全缺（B-3） |
+| TASK-007 | Diagram DSL Schema+业务校验器+Graph Model+sourceRefs 校验器+layout 闸门（BE-016~020、ELK 主选 ADR）；`diagrams`/`diagram_revisions`/`diagram_source_refs` 表；Diagrams Enhanced 前端页 | `POST /projects/:id/diagrams` render API、draw.io XML 生产 adapter、revision 1 落盘、MCP `pm.diagram.render/get`、失败状态闭环全缺 |
+| TASK-005/006/008-012 | 008 的 sourceRefs 校验器已部分存在（随 007 吸收） | 基本全部待开发，按各自 TASK 文档执行 |
 
 并发建议：TASK-005 与 TASK-006 可在 TASK-004 验收后并行；TASK-011 在 TASK-006 完成后可与 TASK-008～010 的后续工作并行。其他并行任务由开发项目经理结合实际修改文件再次判断，涉及同一公共合同、migration runner、Tauri 配置或 Diagram DSL 时优先串行。
+
+**派发顺序（PM 决定）**：TASK-001（contracts 公共区唯一负责人，先收口前端重复合同）→ 验收后 TASK-002（补 src-tauri）→ TASK-003 → TASK-004。003/004 将解除集成报告 B-3（当前唯一实质性功能缺口）。TASK-001 与 TASK-002 涉及根配置/health contracts 交叠，本轮串行。
